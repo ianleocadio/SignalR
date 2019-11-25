@@ -21,7 +21,7 @@ namespace SignalRServer
         public void Configure(IApplicationBuilder app)
         {
             app.UseRouting();
-            app.UseEndpoints(ep => ep.MapHub<TesteHub>("/testeHub"));
+            app.UseEndpoints(ep => ep.MapHub<TesteHub>("/ImpressaoPostoColeta"));
         }
     }
 }
