@@ -1,41 +1,71 @@
 ﻿using Microsoft.AspNetCore.SignalR.Client;
 using System;
+using System.Globalization;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace SignalRClient
 {
     class Program
     {
 
-        // "Método REST/Business"
+        static HubConnection Connection;
+
         static void Main(string[] args)
         {
-            // Servidor WEBSERVICE tenta abrir conexão com o servidor de impressão
-            var connection = new HubConnectionBuilder()
-                .WithUrl("http://localhost:5000/ImpressaoPostoColeta")
-                .Build();
+
+            Connection = new HubConnectionBuilder()
+                   .WithUrl("http://localhost:5000/ImpressaoPostoColeta")
+                   .Build();
+
+            //Connection.Closed += async (error) =>
+            //{
+            //    await Task.Delay(new Random().Next(0, 5) * 1000);
+            //    await Connection.StartAsync();
+            //};
+
+            Connection.On<string>("Imprime", (string etiqueta) =>
+            {
+                Console.WriteLine(GetTime() + " Etiqueta impressa: " + etiqueta);
+            });
 
             try
             {
-                // Abre conexão
-                connection.StartAsync().Wait();
-
-                // Invoca evento de impressão passando parametros necessários
-                connection.InvokeCoreAsync("Imprime", args: new[] { "Report teste", "DataSet teste", "Endereco teste" });
-                
-
-                // Pode escutar 
-                connection.On("SucessoImpressao",() => Console.WriteLine("Imprimiu com sucesso!"));
-                connection.On("ErroImpressao", (Exception ex) => Console.WriteLine(ex));
+                Connection.StartAsync().Wait();
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Console.WriteLine(GetTime() + " Erro: " + ex.Message);
             }
-            finally
+            finally 
             {
-                Console.ReadKey();
+                var task = Connection.InvokeAsync("HandShake", new[] { "Filial 1" });
+                while (!task.IsCompleted)
+                {
+                    Thread.Sleep(10000);
+                    Console.WriteLine(GetTime() + " Trying to handshake with the server...");
+                }
 
+
+                var console = Console.ReadKey();
+                while (console.Key != ConsoleKey.Escape)
+                {
+                    console = Console.ReadKey();
+                }
+                
             }
+
+        }
+
+        //public static async RunTask(string unidade)
+        //{ 
+            
+        //}
+
+        public static string GetTime()
+        {
+            return string.Format("{0} -", DateTime.UtcNow.ToString("dd-MM-yyyy HH:mm:ss.ffffff",
+                                            CultureInfo.InvariantCulture));
         }
     }
 }
