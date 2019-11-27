@@ -1,4 +1,5 @@
-﻿using SignalRServer.Caller.Models;
+﻿using Microsoft.AspNetCore.SignalR;
+using SignalRServer.Caller.Models;
 using System;
 using System.Linq;
 using System.Threading;
@@ -58,7 +59,7 @@ namespace SignalRServer.Caller.Controllers
                     if (lstPendencia == null || lstPendencia.Count <= 0)
                         continue;
 
-                    foreach (var Caller in Callers.ToList())
+                    foreach (var Caller in Callers.Where(c => c.Alive).ToList())
                     {
                         foreach (var pendencia in lstPendencia.Where(p => p?.unidade == Caller.Unidade))
                         {

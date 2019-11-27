@@ -27,12 +27,11 @@ namespace SignalRServer.SignalR.Hubs
             Console.WriteLine(Program.GetTime() + "[MainHub.HandShake] " + req.Unidade + " Informou que está aberta a solicitações");
 
             // Adiciona Caller
-            Program.TesteCallerController.Callers.Add(new TesteCaller(req.Unidade, Clients.Caller, true));
+            Program.TesteCallerController.AddCaller(new TesteCaller(req.Unidade, Context.User.Identity.Name, Clients.Caller, true));
 
             Console.WriteLine(Program.GetTime() + "[MainHub.HandShake] Caller: " + req.Unidade + " adicionado");
 
             await Clients.Caller.SendAsync("HandShaked");
-
 
             Program.TesteCallerController.RunInstance();
 
@@ -41,12 +40,16 @@ namespace SignalRServer.SignalR.Hubs
         public override async Task OnConnectedAsync()
         {
             Console.WriteLine("Connected: " + Context.User.Identity.Name);
+
             await base.OnConnectedAsync();
         }
 
         public override async Task OnDisconnectedAsync(Exception ex)
         {
             Console.WriteLine("Disconnected: " + Context.User.Identity.Name);
+
+            Program.TesteCallerController.DisableCaller(Context.User.Identity.Name);
+
             await base.OnDisconnectedAsync(ex);
         }
 

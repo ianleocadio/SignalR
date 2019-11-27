@@ -11,20 +11,22 @@ namespace SignalRServer.Caller.Models
 
         protected abstract string Event { get; }
 
+        public string UserAuthentication;
         public IClientProxy Caller;
         public bool Alive;
 
-        public ACaller(IClientProxy caller, bool alive)
+        protected ACaller(string userAuthentication, IClientProxy caller, bool alive)
         {
-            Caller = caller;
+            UserAuthentication = userAuthentication ?? throw new ArgumentNullException(nameof(userAuthentication));
+            Caller = caller ?? throw new ArgumentNullException(nameof(caller));
             Alive = alive;
         }
-
 
         public virtual async Task Execute(params object[] args)
         {
             Console.WriteLine("Calling " + Event + " " + args);
             await Caller.SendAsync(Event, args);
         }
+
     }
 }

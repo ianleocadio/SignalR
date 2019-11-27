@@ -9,8 +9,10 @@ namespace SignalRServer.Caller.Models
         protected override string Event { get => "Imprime"; }
 
         public string Unidade;
+        
 
-        public TesteCaller(string unidade, IClientProxy caller, bool alive) : base(caller, alive)
+        public TesteCaller(string unidade, string userAuthentication, IClientProxy caller, bool alive) 
+            : base(userAuthentication, caller, alive)
         {
             Unidade = unidade;
         }
