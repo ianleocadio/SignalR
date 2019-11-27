@@ -49,29 +49,34 @@ namespace SignalRServer.Caller.Controllers
             {
                 try
                 {
-                    var lstPendencia = Program.lstPendencias.Where(p => p.status == Program.Pendencia.StatusPendencia.Open).ToList();
-                    if (lstPendencia.Count <= 0)
+                    var lstPendencia = Program.lstPendencias
+                            .Where(p => 
+                            {
+                                return Program.Pendencia.StatusPendencia.Open == p?.status;
+                            })
+                            .ToList();
+                    if (lstPendencia == null || lstPendencia.Count <= 0)
                         continue;
 
                     foreach (var Caller in Callers.ToList())
                     {
-                        foreach (var pendencia in lstPendencia.Where(p => p.unidade == Caller.Unidade))
+                        foreach (var pendencia in lstPendencia.Where(p => p?.unidade == Caller.Unidade))
                         {
-                            Console.WriteLine("[Loop lstPendencia] - " + pendencia.etiqueta + " " + pendencia.status);
-                            Caller.Execute(pendencia.etiqueta)
-                                .ContinueWith((task) =>
-                                {
-                                    Program.lstPendencias.Remove(pendencia);
-                                    Console.WriteLine("Removeu pendencia: " + pendencia.unidade + "/" + pendencia.etiqueta);
-                                });
 
-                            pendencia.status = Program.Pendencia.StatusPendencia.Processing;
+                                Caller.Execute(pendencia.etiqueta)
+                                    .ContinueWith((task) =>
+                                    {
+                                        Program.lstPendencias.Remove(pendencia);
+                                        Console.WriteLine("Removeu pendencia: " + pendencia.unidade + "/" + pendencia.etiqueta);
+                                    });
+
+                                pendencia.status = Program.Pendencia.StatusPendencia.Processing;
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex.Message);
+                    Console.WriteLine(ex);
                     break;
                 }
             }
