@@ -28,24 +28,36 @@ namespace SignalRServer
                        .AllowAnyOrigin();
             }));
 
+            #region Método temporário para verificar autenticação
+            Task<bool> Authenticate(string username, string password)
+            {
+                return Task.FromResult(
+                        (username == "Filial 1" && password == "Filial1Password") 
+                     || (username == "Filial 2" && password == "Filial2Password")
+                     || (username == "Filial 3" && password == "Filial3Password")
+                    );
+            }
+            #endregion
+
             services.AddAuthentication(BasicAuthenticationDefaults.AuthenticationScheme)
-                .AddBasicAuthentication(credentials => Task.FromResult(
-                    credentials.username == "Filial 1"
-                    && credentials.password == "Filial1Password"));
+                .AddBasicAuthentication(credentials => Authenticate(credentials.username, credentials.password));
+
+            services.AddAuthorization();
 
             services.AddSignalR();
+            services.AddSingleton<IUserIdProvider, NameUserIdProvider>();
         }
 
         public void Configure(IApplicationBuilder app)
         {
-            app.UseCors("CorsPolicy");
-
-            app.UseCors(CorsConstants.AnyOrigin);
-
             
-            app.UseAuthentication();
-
             app.UseRouting();
+
+            app.UseCors("CorsPolicy");
+            app.UseCors(CorsConstants.AnyOrigin);
+            app.UseAuthentication();
+            app.UseAuthorization();
+
             app.UseEndpoints(ep =>
             {
                 ep.MapHub<MainHub>("/ImpressaoPostoColeta");

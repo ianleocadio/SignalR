@@ -50,9 +50,7 @@ namespace SignalRServer
 
         public static void Main(string[] args)
         {
-            lstPendencias.Add(new Pendencia("Filial 1", "etq1un1", Pendencia.StatusPendencia.Open));
-            lstPendencias.Add(new Pendencia("Filial 2", "etq1un2", Pendencia.StatusPendencia.Open));
-            lstPendencias.Add(new Pendencia("Filial 3", "etq1un3", Pendencia.StatusPendencia.Open));
+            CreateLstPendencia();
 
             Thread t1 = new Thread(new ThreadStart(RunWebHost));
             t1.Start();
@@ -67,6 +65,35 @@ namespace SignalRServer
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
                 .UseStartup<Startup>();
+
+
+        private static void CreateLstPendencia()
+        {
+            lstPendencias.Add(new Pendencia("Filial 1", "etq1un1", Pendencia.StatusPendencia.Open));
+            lstPendencias.Add(new Pendencia("Filial 1", "etq2un1", Pendencia.StatusPendencia.Open));
+            lstPendencias.Add(new Pendencia("Filial 1", "etq3un1", Pendencia.StatusPendencia.Open));
+            lstPendencias.Add(new Pendencia("Filial 1", "etq4un1", Pendencia.StatusPendencia.Open));
+
+            lstPendencias.Add(new Pendencia("Filial 2", "etq1un2", Pendencia.StatusPendencia.Open));
+            lstPendencias.Add(new Pendencia("Filial 2", "etq2un2", Pendencia.StatusPendencia.Open));
+            lstPendencias.Add(new Pendencia("Filial 2", "etq3un2", Pendencia.StatusPendencia.Open));
+            lstPendencias.Add(new Pendencia("Filial 2", "etq4un2", Pendencia.StatusPendencia.Open));
+            lstPendencias.Add(new Pendencia("Filial 2", "etq5un2", Pendencia.StatusPendencia.Open));
+            lstPendencias.Add(new Pendencia("Filial 2", "etq6un2", Pendencia.StatusPendencia.Open));
+            lstPendencias.Add(new Pendencia("Filial 2", "etq7un2", Pendencia.StatusPendencia.Open));
+            lstPendencias.Add(new Pendencia("Filial 2", "etq8un2", Pendencia.StatusPendencia.Open));
+            lstPendencias.Add(new Pendencia("Filial 2", "etq9un2", Pendencia.StatusPendencia.Open));
+            lstPendencias.Add(new Pendencia("Filial 2", "etq10un2", Pendencia.StatusPendencia.Open));
+
+            lstPendencias.Add(new Pendencia("Filial 3", "etq1un3", Pendencia.StatusPendencia.Open));
+            lstPendencias.Add(new Pendencia("Filial 3", "etq2un3", Pendencia.StatusPendencia.Open));
+            lstPendencias.Add(new Pendencia("Filial 3", "etq3un3", Pendencia.StatusPendencia.Open));
+            lstPendencias.Add(new Pendencia("Filial 3", "etq4un3", Pendencia.StatusPendencia.Open));
+            lstPendencias.Add(new Pendencia("Filial 3", "etq5un3", Pendencia.StatusPendencia.Open));
+            lstPendencias.Add(new Pendencia("Filial 3", "etq6un3", Pendencia.StatusPendencia.Open));
+            lstPendencias.Add(new Pendencia("Filial 3", "etq7un3", Pendencia.StatusPendencia.Open));
+        }
+
 
 
         public static string GetTime()

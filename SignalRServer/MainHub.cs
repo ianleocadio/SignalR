@@ -3,9 +3,12 @@ using Microsoft.AspNetCore.SignalR;
 using System.Globalization;
 using System.Threading.Tasks;
 using System.Linq;
+using Microsoft.AspNetCore.Authorization;
 
 namespace SignalRServer
 {
+
+    [Authorize]
     public class MainHub : Hub
     {
 
