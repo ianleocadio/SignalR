@@ -13,9 +13,13 @@ namespace SignalRClient
 
         static void Main(string[] args)
         {
+            var credential = Convert.ToBase64String(System.Text.Encoding.GetEncoding("ISO-8859-1").GetBytes("Filial 1" + ":" + "Filial1Password"));
 
             Connection = new HubConnectionBuilder()
-                   .WithUrl("http://localhost:5000/ImpressaoPostoColeta")
+                   .WithUrl("http://localhost:5000/ImpressaoPostoColeta", options =>
+                   {
+                       options.Headers.Add("Authorization", $"Basic {credential}");
+                   })
                    .Build();
 
             //Connection.Closed += async (error) =>

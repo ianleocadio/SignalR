@@ -19,7 +19,10 @@ namespace SignalRServer
         public async Task HandShake(HandShakeRequestParameters req)
         {
             if (req?.Unidade == null)
+            {
                 await Clients.Caller.SendAsync("Recused HandShake");
+                return;
+            }
 
             Console.WriteLine(Program.GetTime() + "[MainHub.HandShake] " + req.Unidade + " Informou que está aberta a solicitações");
 
@@ -35,18 +38,15 @@ namespace SignalRServer
 
         }
         
-        
-
-
         public override async Task OnConnectedAsync()
         {
-            //Console.WriteLine(Context.ConnectionId);
+            Console.WriteLine("Connected: " + Context.User.Identity.Name);
             await base.OnConnectedAsync();
         }
 
         public override async Task OnDisconnectedAsync(Exception ex)
         {
-            //Console.WriteLine(Context.ConnectionId);
+            Console.WriteLine("Disconnected: " + Context.User.Identity.Name);
             await base.OnDisconnectedAsync(ex);
         }
 
