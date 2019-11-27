@@ -11,7 +11,7 @@ namespace SignalRServer
 
         private bool IsRunning = false;
 
-        public async Task HandShake(string unidade)
+        public Task Teste(string unidade)
         {
             Console.WriteLine(Program.GetTime() + "[PrintHub.HandShake] " + unidade + " Informou que está aberta a solicitações");
 
@@ -22,7 +22,7 @@ namespace SignalRServer
             if (!IsRunning)
                 Parallel.Invoke(Run);
 
-            
+            return Clients.Caller.SendAsync("HandShaked");
         }
         
         public void Run()
@@ -57,9 +57,6 @@ namespace SignalRServer
 
             Console.WriteLine(Program.GetTime() + "[PrintHub.Run] Finalizado");
         }
-
-
-        
 
     }
 }

@@ -42,9 +42,11 @@ namespace SignalRClient
                 var task = Connection.InvokeAsync("HandShake", new[] { "Filial 1" });
                 while (!task.IsCompleted)
                 {
-                    Thread.Sleep(10000);
                     Console.WriteLine(GetTime() + " Trying to handshake with the server...");
+                    Thread.Sleep(2000);
                 }
+
+                Console.WriteLine("Task ["+task.Id+"] completed");
 
 
                 var console = Console.ReadKey();
