@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SignalRServer.Authentication;
+using SignalRServer.SignalR.Hub;
 using System.Threading.Tasks;
 
 namespace SignalRServer

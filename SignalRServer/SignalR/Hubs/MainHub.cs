@@ -1,18 +1,15 @@
 ﻿using System;
-using Microsoft.AspNetCore.SignalR;
-using System.Globalization;
 using System.Threading.Tasks;
-using System.Linq;
 using Microsoft.AspNetCore.Authorization;
+using SignalRServer.Caller.Models;
+using Microsoft.AspNetCore.SignalR;
 
-namespace SignalRServer
+namespace SignalRServer.SignalR.Hubs
 {
 
     [Authorize]
     public class MainHub : Hub
     {
-
-        private bool IsRunning = false;
 
         public class HandShakeRequestParameters
         {
@@ -36,11 +33,11 @@ namespace SignalRServer
 
             await Clients.Caller.SendAsync("HandShaked");
 
-            
+
             Program.TesteCallerController.RunInstance();
 
         }
-        
+
         public override async Task OnConnectedAsync()
         {
             Console.WriteLine("Connected: " + Context.User.Identity.Name);

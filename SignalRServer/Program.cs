@@ -5,6 +5,7 @@ using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using System.Collections.Generic;
 using System.Globalization;
+using SignalRServer.Caller.Controllers;
 
 namespace SignalRServer
 {

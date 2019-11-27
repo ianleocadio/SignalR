@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using SignalRServer.Caller.Models;
+using System;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SignalRServer
+namespace SignalRServer.Caller.Controllers
 {
     public class TesteCallerController : CallerController<TesteCaller>
     {
@@ -15,14 +14,14 @@ namespace SignalRServer
 
         public Task TaskInstance
         {
-            get 
+            get
             {
                 if (_task == null)
                 {
                     _cancellationTokenSource = new CancellationTokenSource();
                     _task = new Task(Run, _cancellationTokenSource.Token);
                 }
-                
+
                 return _task;
             }
         }
@@ -44,7 +43,7 @@ namespace SignalRServer
 
         public void Run()
         {
-            
+
             Console.WriteLine(Program.GetTime() + "[TesteCallerController.Run] Executando...");
             while (true)
             {
@@ -54,7 +53,7 @@ namespace SignalRServer
                     if (lstPendencia.Count <= 0)
                         continue;
 
-                    foreach (var Caller in base.Callers.ToList())
+                    foreach (var Caller in Callers.ToList())
                     {
                         foreach (var pendencia in lstPendencia.Where(p => p.unidade == Caller.Unidade))
                         {

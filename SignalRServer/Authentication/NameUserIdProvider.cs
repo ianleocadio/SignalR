@@ -1,9 +1,6 @@
 ﻿using Microsoft.AspNetCore.SignalR;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace SignalRServer
+namespace SignalRServer.Authentication
 {
     public class NameUserIdProvider : IUserIdProvider
     {
