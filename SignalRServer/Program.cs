@@ -13,15 +13,15 @@ namespace SignalRServer
 
         private static IWebHost wb = null;
 
-        private static CallerController<TesteCaller> _callerController;
-        public static CallerController<TesteCaller> CallerController
+        private static TesteCallerController _testeCallerController;
+        public static TesteCallerController TesteCallerController
         {
             get
             {
-                if (_callerController == null)
-                    _callerController = new CallerController<TesteCaller>();
+                if (_testeCallerController == null)
+                    _testeCallerController = new TesteCallerController();
 
-                return _callerController;
+                return _testeCallerController;
             }
         }
 

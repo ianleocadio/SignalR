@@ -11,51 +11,43 @@ namespace SignalRServer
 
         private bool IsRunning = false;
 
-        public Task Teste(string unidade)
+        public class HandShakeRequestParameters
         {
-            Console.WriteLine(Program.GetTime() + "[PrintHub.HandShake] " + unidade + " Informou que está aberta a solicitações");
+            public string Unidade { get; set; }
+        }
 
-            Program.CallerController.Callers.Add(new TesteCaller(unidade, Clients.Caller, true));
+        public async Task HandShake(HandShakeRequestParameters req)
+        {
+            if (req?.Unidade == null)
+                await Clients.Caller.SendAsync("Recused HandShake");
 
-            Console.WriteLine(Program.GetTime() + "[PrintHub.HandShake] Caller: " + unidade + " adicionado");
+            Console.WriteLine(Program.GetTime() + "[MainHub.HandShake] " + req.Unidade + " Informou que está aberta a solicitações");
 
-            if (!IsRunning)
-                Parallel.Invoke(Run);
+            // Adiciona Caller
+            Program.TesteCallerController.Callers.Add(new TesteCaller(req.Unidade, Clients.Caller, true));
 
-            return Clients.Caller.SendAsync("HandShaked");
+            Console.WriteLine(Program.GetTime() + "[MainHub.HandShake] Caller: " + req.Unidade + " adicionado");
+
+            await Clients.Caller.SendAsync("HandShaked");
+
+            
+            Program.TesteCallerController.RunInstance();
+
         }
         
-        public void Run()
+        
+
+
+        public override async Task OnConnectedAsync()
         {
+            //Console.WriteLine(Context.ConnectionId);
+            await base.OnConnectedAsync();
+        }
 
-            IsRunning = true;
-
-            Console.WriteLine(Program.GetTime() + "[PrintHub.Run] Executando...");
-            while (IsRunning)
-            {
-                var lstPendencia = Program.lstPendencias.Where(p => p.status == Program.Pendencia.StatusPendencia.Open).ToList();
-                if (lstPendencia.Count <= 0)
-                    continue;
-
-                foreach (var Caller in Program.CallerController.Callers.ToList())
-                {
-                    foreach (var pendencia in lstPendencia.Where(p => p.unidade == Caller.Unidade))
-                    {
-                        Caller.Execute(pendencia.etiqueta)
-                            .ContinueWith((task) =>
-                            {
-                                Console.WriteLine(task.Status);
-                                Program.lstPendencias.Remove(pendencia);
-                                Console.WriteLine("Removeu pendencia: " + pendencia.unidade + "/" + pendencia.etiqueta);
-                            })
-                            .Wait();
-
-                        pendencia.status = Program.Pendencia.StatusPendencia.Processing;
-                    }
-                }
-            }
-
-            Console.WriteLine(Program.GetTime() + "[PrintHub.Run] Finalizado");
+        public override async Task OnDisconnectedAsync(Exception ex)
+        {
+            //Console.WriteLine(Context.ConnectionId);
+            await base.OnDisconnectedAsync(ex);
         }
 
     }

@@ -39,14 +39,23 @@ namespace SignalRClient
             }
             finally 
             {
-                var task = Connection.InvokeAsync("HandShake", new[] { "Filial 1" });
+                var task = Connection.InvokeAsync("HandShake", new { Unidade = "Filial 3" });
+                //throw new Exception("HAHAHHAHAHA");
+                task.Wait();
                 while (!task.IsCompleted)
                 {
                     Console.WriteLine(GetTime() + " Trying to handshake with the server...");
                     Thread.Sleep(2000);
                 }
 
-                Console.WriteLine("Task ["+task.Id+"] completed");
+                if (task.IsCompletedSuccessfully)
+                    Console.WriteLine("Task [" + task.Id + "] completed");
+                else if (task.IsCanceled)
+                    Console.WriteLine("Task [" + task.Id + "] Canceled");
+                else if (task.IsFaulted)
+                    Console.WriteLine("Task [" + task.Id + "] Faulted " + task?.Exception.Message);
+                else
+                    Console.WriteLine("Task [" + task.Id + "] unhandled error");
 
 
                 var console = Console.ReadKey();
@@ -54,15 +63,11 @@ namespace SignalRClient
                 {
                     console = Console.ReadKey();
                 }
-                
+
             }
 
         }
 
-        //public static async RunTask(string unidade)
-        //{ 
-            
-        //}
 
         public static string GetTime()
         {
