@@ -51,10 +51,7 @@ namespace SignalRServer.Caller.Controllers
                 try
                 {
                     var lstPendencia = Program.lstPendencias
-                            .Where(p => 
-                            {
-                                return Program.Pendencia.StatusPendencia.Open == p?.status;
-                            })
+                            .Where(p => Program.Pendencia.StatusPendencia.Open == p?.status)
                             .ToList();
                     if (lstPendencia == null || lstPendencia.Count <= 0)
                         continue;
@@ -64,17 +61,19 @@ namespace SignalRServer.Caller.Controllers
                         foreach (var pendencia in lstPendencia.Where(p => p?.unidade == Caller.Unidade))
                         {
 
-                                Caller.Execute(pendencia.etiqueta)
-                                    .ContinueWith((task) =>
-                                    {
-                                        Program.lstPendencias.Remove(pendencia);
-                                        Console.WriteLine("Removeu pendencia: " + pendencia.unidade + "/" + pendencia.etiqueta);
-                                    });
+                            Caller.Execute(pendencia.etiqueta)
+                                .ContinueWith((task) =>
+                                {
+                                    Program.lstPendencias.Remove(pendencia);
+                                    Console.WriteLine("Removeu pendencia: " + pendencia.unidade + "/" + pendencia.etiqueta);
+                                });
 
-                                pendencia.status = Program.Pendencia.StatusPendencia.Processing;
+                            pendencia.status = Program.Pendencia.StatusPendencia.Processing;
                         }
                     }
                 }
+                catch (IndexOutOfRangeException) { }
+                catch (NullReferenceException) { }
                 catch (Exception ex)
                 {
                     Console.WriteLine(ex);
