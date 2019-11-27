@@ -21,10 +21,10 @@ namespace SignalRServer
         }
 
 
-        public virtual async Task Execute(params object[] args)
+        public virtual Task Execute(params object[] args)
         {
             Console.WriteLine("Calling " + Event + " " + args);
-            await Caller.SendAsync(Event, args);
+            return Caller.SendAsync(Event, args);
         }
     }
 }

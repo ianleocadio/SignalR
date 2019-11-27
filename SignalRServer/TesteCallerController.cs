@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,8 +9,8 @@ namespace SignalRServer
     {
 
         private CancellationTokenSource _cancellationTokenSource;
+        
         private Task _task;
-
         public Task TaskInstance
         {
             get 
@@ -58,7 +56,7 @@ namespace SignalRServer
                     {
                         foreach (var pendencia in lstPendencia.Where(p => p.unidade == Caller.Unidade))
                         {
-                            Console.WriteLine("[Loop lstPendencia] - " + pendencia.etiqueta + " " + pendencia.status);
+                            //Console.WriteLine("[Loop lstPendencia] - " + pendencia.etiqueta + " " + pendencia.status);
                             Caller.Execute(pendencia.etiqueta)
                                 .ContinueWith((task) =>
                                 {

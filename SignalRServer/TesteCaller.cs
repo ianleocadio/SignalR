@@ -17,10 +17,10 @@ namespace SignalRServer
             Unidade = unidade;
         }
 
-        public override async Task Execute(params object[] args)
+        public override Task Execute(params object[] args)
         {
             Console.WriteLine(Program.GetTime() + "[TesteCaller.Execute] Calling " + Event + " on " + Unidade + " with: " + args[0]?.ToString());
-            await Caller.SendAsync(Event, args[0]?.ToString());
+            return Caller.SendAsync(Event, args[0]?.ToString());
         }
     }
 }

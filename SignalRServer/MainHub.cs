@@ -3,13 +3,15 @@ using Microsoft.AspNetCore.SignalR;
 using System.Globalization;
 using System.Threading.Tasks;
 using System.Linq;
+using Microsoft.AspNetCore.Authorization;
 
 namespace SignalRServer
 {
+    [Authorize]
     public class MainHub : Hub
     {
 
-        private bool IsRunning = false;
+        
 
         public class HandShakeRequestParameters
         {
@@ -40,13 +42,13 @@ namespace SignalRServer
 
         public override async Task OnConnectedAsync()
         {
-            //Console.WriteLine(Context.ConnectionId);
+            Console.WriteLine("Connected: " + Context.User.Identity.Name);
             await base.OnConnectedAsync();
         }
 
         public override async Task OnDisconnectedAsync(Exception ex)
         {
-            //Console.WriteLine(Context.ConnectionId);
+            Console.WriteLine("Disconnected: " + Context.User.Identity.Name);
             await base.OnDisconnectedAsync(ex);
         }
 

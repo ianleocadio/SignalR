@@ -15,7 +15,10 @@ namespace SignalRClient
         {
 
             Connection = new HubConnectionBuilder()
-                   .WithUrl("http://localhost:5000/ImpressaoPostoColeta")
+                   .WithUrl("http://localhost:5000/hubs/impressaoPostoColeta", options =>
+                   {
+                       options.AccessTokenProvider = () => Task.FromResult("1234");
+                   })
                    .Build();
 
             //Connection.Closed += async (error) =>
@@ -40,7 +43,7 @@ namespace SignalRClient
             finally 
             {
                 var task = Connection.InvokeAsync("HandShake", new { Unidade = "Filial 3" });
-                //throw new Exception("HAHAHHAHAHA");
+                
                 task.Wait();
                 while (!task.IsCompleted)
                 {
