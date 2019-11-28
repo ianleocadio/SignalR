@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
+using Microsoft.Extensions.Logging.EventLog;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -39,6 +40,8 @@ namespace SignalRClient.Logging
             {
                 builder
                     .ClearProviders()
+                    .AddProvider(new EventLogLoggerProvider())
+                    .AddFilter<EventLogLoggerProvider>(level => level >= LogLevel.Information)
                     .AddFilter("Microsoft", LogLevel.Warning)
                     .AddFilter("System", LogLevel.Warning)
                     //.AddFilter("LoggingConsoleApp.Program", LogLevel.Debug)
@@ -47,7 +50,7 @@ namespace SignalRClient.Logging
             });
         }
 
-        public void Dispose()
+    public void Dispose()
         {
             _loggers.Clear();
         }

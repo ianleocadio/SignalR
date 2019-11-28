@@ -16,7 +16,7 @@ namespace SignalRClient
 
         private readonly HubConnection _connection;
 
-        private readonly string Unidade = "Filial 1";
+        public static readonly string Unidade = "Filial 1";
 
         public Worker()
         {
@@ -30,7 +30,6 @@ namespace SignalRClient
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-
             try
             {
                 _logger.LogInformation("[{time}] Realizando conexão...", DateTimeOffset.Now);
@@ -44,22 +43,45 @@ namespace SignalRClient
             }
             finally
             {
-                var task = _connection.InvokeAsync("HandShake", new { Unidade });
-                task.Wait();
-                if (task.IsCompletedSuccessfully)
-                    _logger.LogInformation("[{time}] HandShake realizado com sucesso", DateTimeOffset.Now);
-                else if (task.IsCanceled)
-                    _logger.LogWarning("[{time}] HandShake cancelado", DateTimeOffset.Now);
-                else if (task.IsFaulted)
-                    _logger.LogError("[{time}] Falha ao realizar o HandShake", DateTimeOffset.Now);
-                else
-                    _logger.LogCritical("[{time}] Ocorreu um erro não tratado durante o handshake", DateTimeOffset.Now);
+
+                Task tryHandShakeTask = null;
+                do
+                {
+                    try
+                    {
+                        tryHandShakeTask = _connection.InvokeAsync("HandShake", new { Unidade = Worker.Unidade });
+                        tryHandShakeTask.Wait();
+                        if (tryHandShakeTask.IsCompletedSuccessfully)
+                        {
+                            _logger.LogInformation("[{time}] HandShake realizado com sucesso", DateTimeOffset.Now);
+                            break;
+                        }
+                        else if (tryHandShakeTask.IsCanceled)
+                        {
+                            _logger.LogWarning("[{time}] HandShake cancelado", DateTimeOffset.Now);
+                        }
+                        else if (tryHandShakeTask.IsFaulted)
+                        {
+                            _logger.LogError("[{time}] Falha ao realizar o HandShake", DateTimeOffset.Now);
+                        }
+                        else
+                        {
+                            _logger.LogCritical("[{time}] Ocorreu um erro não tratado durante o handshake", DateTimeOffset.Now);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogCritical("[{time}] {ex}", ex);
+                    }
+
+                } while (!tryHandShakeTask.IsCompletedSuccessfully);
 
 
                 _logger.LogInformation("[{time}] Serviço na unidade {unidade} está executando", DateTimeOffset.Now, Unidade);
                 while (!stoppingToken.IsCancellationRequested)
                 {
                 }
+                _logger.LogInformation("[{time}] Serviço na unidade {unidade} finalizado", DateTimeOffset.Now, Unidade);
             }
             
         }
