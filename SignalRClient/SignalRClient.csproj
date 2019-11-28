@@ -5,14 +5,22 @@
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <StartupObject>SignalRClient.Program</StartupObject>
     <ApplicationIcon />
+    <Configurations>Debug;Release;d</Configurations>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNet.SignalR.SelfHost" Version="2.4.1" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="3.0.0" />
-    <PackageReference Include="Microsoft.Owin.Cors" Version="4.1.0" />
-    <PackageReference Include="Topshelf" Version="4.2.1" />
-    <PackageReference Include="Topshelf.NLog" Version="4.2.1" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="3.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="3.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.Development.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

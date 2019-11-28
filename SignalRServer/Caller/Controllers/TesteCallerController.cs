@@ -77,11 +77,10 @@ namespace SignalRServer.Caller.Controllers
                 catch (Exception ex)
                 {
                     Console.WriteLine(ex);
-                    break;
                 }
             }
 
-            Console.WriteLine(Program.GetTime() + "[TesteCallerController.Run] Finalizado");
+            //Console.WriteLine(Program.GetTime() + "[TesteCallerController.Run] Finalizado");
         }
     }
 }
