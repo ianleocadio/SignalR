@@ -29,8 +29,8 @@ namespace SignalRClient.Logging
                 .MinimumLevel.Debug()
                 .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
                 .Enrich.FromLogContext()
-                //.WriteTo.File(_configuration.Data.geral.LogFilePath)
-                //.WriteTo.EventLog("SignalRClient", manageEventSource: true)
+                .WriteTo.EventLog(_configuration.Data.logging.EventLogSourceName, manageEventSource: true)
+                .WriteTo.File(_configuration.Data.logging.LogFilePath)
                 .WriteTo.ColoredConsole();
         }
     }

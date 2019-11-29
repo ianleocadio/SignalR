@@ -15,10 +15,8 @@ namespace SignalRClient
 
         public static void Main(string[] args)
         {
-
             CustomConfiguration config = new CustomConfiguration(IsDevelopmentEnviroment: true);
             LoggerProvider loggerProvider = new LoggerProvider(config);
-
             Log.Logger = loggerProvider.GetLogger();
 
             try

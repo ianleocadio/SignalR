@@ -70,6 +70,7 @@ namespace SignalRClient
                     catch (Exception ex)
                     {
                         _logger.LogError("{ex}", ex.Message);
+                        await Task.Delay(5000);
                     }
 
                 } while (!tryHandShakeTask.IsCompletedSuccessfully);

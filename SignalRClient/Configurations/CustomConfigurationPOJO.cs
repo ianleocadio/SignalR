@@ -12,7 +12,16 @@ namespace SignalRClient.Configurations
         public partial class Geral
         {
             public string Unidade { get; set; }
+        }
+        #endregion
+
+        #region Logging
+        public Logging logging { get; set; }
+        public partial class Logging
+        {
             public string LogFilePath { get; set; }
+            public string EventLogSourceName { get; set; }
+
         }
         #endregion
 

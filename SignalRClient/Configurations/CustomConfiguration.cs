@@ -14,16 +14,9 @@ namespace SignalRClient.Configurations
 
         public CustomConfiguration(bool IsDevelopmentEnviroment = false)
         {
-
             IConfigurationRoot config = GetConfiguration(IsDevelopmentEnviroment);
 
-            Data = new CustomConfigurationPOJO
-            {
-                geral = config.GetSection("Geral").Get<Geral>(),
-                authentication = config.GetSection("Authentication").Get<Authentication>(),
-                serverConnection = config.GetSection("ServerConnection").Get<ServerConnection>()
-            };
-
+            Data = config.GetSection("Configuration").Get<CustomConfigurationPOJO>();
         }
 
         private IConfigurationRoot GetConfiguration(bool IsDevelopmentEnviroment = false)
