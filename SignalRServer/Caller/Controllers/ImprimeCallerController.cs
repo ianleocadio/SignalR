@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using Microsoft.Extensions.Logging;
+using SignalRClient.Logging;
 using SignalRServer.Caller.Models;
 using System;
 using System.Linq;
@@ -7,8 +8,10 @@ using System.Threading.Tasks;
 
 namespace SignalRServer.Caller.Controllers
 {
-    public class TesteCallerController : CallerController<TesteCaller>
+    public class ImprimeCallerController : CallerController<ImprimeCaller>
     {
+
+        private readonly ILogger<ImprimeCallerController> _logger = LoggerProvider.GetLogger<ImprimeCallerController>();
 
         private CancellationTokenSource _cancellationTokenSource;
         private Task _task;
@@ -44,8 +47,9 @@ namespace SignalRServer.Caller.Controllers
 
         public void Run()
         {
+            _logger.LogInformation("[{time}] Executando...", DateTimeOffset.Now);
 
-            Console.WriteLine(Program.GetTime() + "[TesteCallerController.Run] Executando...");
+            // Pode ser controlado por fora atráves de um CancellationToken
             while (true)
             {
                 try
@@ -65,7 +69,7 @@ namespace SignalRServer.Caller.Controllers
                                 .ContinueWith((task) =>
                                 {
                                     Program.lstPendencias.Remove(pendencia);
-                                    Console.WriteLine("Removeu pendencia: " + pendencia.unidade + "/" + pendencia.etiqueta);
+                                    _logger.LogInformation("[{time}] Removeu pendência: {unidade}/{etiqueta}", DateTimeOffset.Now, pendencia.unidade, pendencia.etiqueta);
                                 });
 
                             pendencia.status = Program.Pendencia.StatusPendencia.Processing;
@@ -76,11 +80,11 @@ namespace SignalRServer.Caller.Controllers
                 catch (NullReferenceException) { }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex);
+                    _logger.LogError("[{time}] {ex}", DateTimeOffset.Now, ex);
                 }
             }
 
-            //Console.WriteLine(Program.GetTime() + "[TesteCallerController.Run] Finalizado");
+            //_logger.LogInformation("[{time}] Finalizado", DateTimeOffset.Now);
         }
     }
 }

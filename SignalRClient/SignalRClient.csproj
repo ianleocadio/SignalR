@@ -1,17 +1,18 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.0</TargetFramework>
-    <StartupObject>SignalRClient.Program</StartupObject>
-    <ApplicationIcon />
-    <Configurations>Debug;Release;d</Configurations>
+    <UserSecretsId>dotnet-signalrclient-59EE4E60-17D9-40F8-98AA-D6E292302B29</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="3.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="3.0.1" />
     <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="3.0.1" />
+    <PackageReference Include="Serilog.AspNetCore" Version="3.2.0" />
+    <PackageReference Include="Serilog.Sinks.ColoredConsole" Version="3.0.1" />
+    <PackageReference Include="Serilog.Sinks.EventLog" Version="3.1.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="4.1.0" />
   </ItemGroup>
 
   <ItemGroup>

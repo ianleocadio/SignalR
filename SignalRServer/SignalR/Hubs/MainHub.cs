@@ -3,6 +3,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using SignalRServer.Caller.Models;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
+using SignalRClient.Logging;
 
 namespace SignalRServer.SignalR.Hubs
 {
@@ -11,44 +13,61 @@ namespace SignalRServer.SignalR.Hubs
     public class MainHub : Hub
     {
 
+        private readonly ILogger<MainHub> _logger = LoggerProvider.GetLogger<MainHub>();
+
+        #region DTO's para mapear paramêtros da requisição
         public class HandShakeRequestParameters
         {
             public string Unidade { get; set; }
         }
 
-        public async Task HandShake(HandShakeRequestParameters req)
+        public class FalhaImpressaoRequestParameters
+        {
+            public string Unidade { get; set; }
+            public string Etiqueta { get; set; }
+        }
+        #endregion
+
+        public void HandShake(HandShakeRequestParameters req)
         {
             if (req?.Unidade == null)
-            {
-                await Clients.Caller.SendAsync("Recused HandShake");
                 return;
-            }
 
-            Console.WriteLine(Program.GetTime() + "[MainHub.HandShake] " + req.Unidade + " Informou que está aberta a solicitações");
+            _logger.LogInformation("[{time}] {Unidade} Informou que está aberta a solicitações", DateTimeOffset.Now, req.Unidade);
 
             // Adiciona Caller
-            Program.TesteCallerController.AddCaller(new TesteCaller(req.Unidade, Context.User.Identity.Name, Clients.Caller, true));
+            Program.ImprimeCallerController.AddCaller(new ImprimeCaller(req.Unidade, Context.User.Identity.Name, Clients.Caller, true));
 
-            Console.WriteLine(Program.GetTime() + "[MainHub.HandShake] Caller: " + req.Unidade + " adicionado");
+            _logger.LogInformation("[{time}] Caller: {Unidade} adicionado", DateTimeOffset.Now, req.Unidade);
 
-            await Clients.Caller.SendAsync("HandShaked");
+            Program.ImprimeCallerController.RunInstance();
 
-            Program.TesteCallerController.RunInstance();
+        }
 
+        public void FalhaImpressao(FalhaImpressaoRequestParameters req)
+        {
+            if (req?.Unidade == null || req?.Etiqueta == null)
+                return;
+
+            _logger.LogWarning("[{time}] {Unidade} Informou que houve erro ao imprimir a etiqueta: {etiqueta}", DateTimeOffset.Now, req.Unidade, req.Etiqueta);
+
+            // Tratamentos...
+            // -> Reenviar pendência ?
         }
 
         public override async Task OnConnectedAsync()
         {
-            Console.WriteLine("Connected: " + Context.User.Identity.Name);
+
+            _logger.LogWarning("[{time}] Connected: {Client}", DateTimeOffset.Now, Context.User.Identity.Name);
 
             await base.OnConnectedAsync();
         }
 
         public override async Task OnDisconnectedAsync(Exception ex)
         {
-            Console.WriteLine("Disconnected: " + Context.User.Identity.Name);
+            _logger.LogWarning("[{time}] Disconnected: {Client}", DateTimeOffset.Now, Context.User.Identity.Name);
 
-            Program.TesteCallerController.DisableCaller(Context.User.Identity.Name);
+            Program.ImprimeCallerController.DisableCaller(Context.User.Identity.Name);
 
             await base.OnDisconnectedAsync(ex);
         }

@@ -1,27 +1,51 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Serilog;
+using SignalRClient.Logging;
+using System;
+using System.IO;
+using static SignalRClient.Configurations.CustomConfigurationPOJO;
 
 namespace SignalRClient.Configurations
 {
     public class CustomConfiguration
     {
+        public CustomConfigurationPOJO Data { get; set; }
 
-        public partial class ServerConnection
+        public CustomConfiguration(bool IsDevelopmentEnviroment = false)
         {
-            public string URI { get; set; }
+
+            IConfigurationRoot config = GetConfiguration(IsDevelopmentEnviroment);
+
+            Data = new CustomConfigurationPOJO
+            {
+                geral = config.GetSection("Geral").Get<Geral>(),
+                authentication = config.GetSection("Authentication").Get<Authentication>(),
+                serverConnection = config.GetSection("ServerConnection").Get<ServerConnection>()
+            };
+
         }
 
-        public partial class Authentication
+        private IConfigurationRoot GetConfiguration(bool IsDevelopmentEnviroment = false)
         {
-            public string Username { get; set; }
-            public string Password { get; set; }
 
-            public string GetCredentials()
+            IConfigurationRoot config = null;
+
+            try
             {
-                return Convert.ToBase64String(Encoding.GetEncoding("ISO-8859-1")
-                    .GetBytes($"{Username}" + ":" + $"{Password}"));
+                config = new ConfigurationBuilder()
+                        .SetBasePath(Directory.GetCurrentDirectory())
+                        .AddJsonFile((IsDevelopmentEnviroment) ? "appsettings.Development.json" : "appsettings.json", false, true)
+                        .Build();
             }
+            catch (Exception ex)
+            {
+                Log.Error("Erro ao carregar arquivo de configurações appsettigs");
+                Log.Error("{ex}", ex);
+                throw ex;
+            }
+
+            return config;
         }
     }
 }

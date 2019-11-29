@@ -1,30 +1,75 @@
 ﻿using System;
-using System.Configuration;
-using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.EventLog;
+using Serilog;
 using SignalRClient.Configurations;
+using SignalRClient.Connections;
+using SignalRClient.Connections.Template;
+using SignalRClient.Logging;
 
 namespace SignalRClient
 {
     class Program
     {
+
         public static void Main(string[] args)
         {
-            CreateHostBuilder(args).Build().Run();
+
+            CustomConfiguration config = new CustomConfiguration(IsDevelopmentEnviroment: true);
+            LoggerProvider loggerProvider = new LoggerProvider(config);
+
+            Log.Logger = loggerProvider.GetLogger();
+
+            try
+            {
+                Log.Information("Iniciando o serviço");
+                CreateHostBuilder(config, args).Build().Run();
+                return;
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, "Houve um problema ao inciar o serviço");
+                return;
+            }
+            finally
+            {
+                Log.CloseAndFlush();
+            }
+
+            
         }
 
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
+        public static IHostBuilder CreateHostBuilder(CustomConfiguration configuration, string[] args) =>
             Host.CreateDefaultBuilder(args)
-                .ConfigureServices((hostContext, services) => 
-                    services.AddHostedService<Worker>()
-                            .Configure<EventLogSettings>(config =>
+                .UseWindowsService()
+                .ConfigureServices((hostContext, services) =>
+                {
+                    services.AddHostedService<Worker>();
+
+                    #region Singletons
+                    services.AddSingleton<CustomConfiguration>(configuration)
+                            .AddSingleton<ConnectionProvider>((provider) =>
                             {
-                                config.LogName = "Filial 1 Service";
-                                config.SourceName = "Filial 1 Service Source";
-                            }))
-                .UseWindowsService();
+                                ILogger<ConnectionProvider> logger = provider.GetService<ILogger<ConnectionProvider>>();
+                                CustomConfiguration config = provider.GetService<CustomConfiguration>();
+
+                                return new ConnectionProvider(logger, config);
+                            });
+                    #endregion
+
+                    #region Scoped's
+                    services.AddScoped<AbstractTemplateSetupConnection, UnidadeColetaTemplateSetupConnection>((provider) =>
+                            {
+                                ILogger<UnidadeColetaTemplateSetupConnection> logger = provider.GetService<ILogger<UnidadeColetaTemplateSetupConnection>>();
+                                CustomConfiguration config = provider.GetService<CustomConfiguration>();
+                                ConnectionProvider connectionProvider = provider.GetService<ConnectionProvider>();
+
+                                return new UnidadeColetaTemplateSetupConnection(logger, configuration, connectionProvider);
+                                
+                            });
+                    #endregion
+                })
+                .UseSerilog();
     }
 }

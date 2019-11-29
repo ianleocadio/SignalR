@@ -1,29 +1,27 @@
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using SignalRClient.Connections;
 using SignalRClient.Connections.Template;
-using SignalRClient.Logging;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using SignalRClient.Configurations;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace SignalRClient
 {
     public class Worker : BackgroundService
     {
-        private readonly ILogger<Worker> _logger = LoggerProvider.GetLogger<Worker>();
-
+        private readonly ILogger<Worker> _logger;
+        private readonly CustomConfiguration _configuration;
         private readonly HubConnection _connection;
 
-        public static readonly string Unidade = "Filial 1";
-
-        public Worker()
+        public Worker(ILogger<Worker> logger, CustomConfiguration configuration, ConnectionProvider connectionProvider, AbstractTemplateSetupConnection templateSetupConnection)
         {
-            _connection = ConnectionProvider.GetInstance(true)?.Connection;
-
-            AbstractTemplateSetupConnection templateSetupConnection = 
-                new UnidadeColetaTemplateSetupConnection(_connection);
+            _logger = logger;
+            _configuration = configuration;
+            _connection = connectionProvider?.Connection;
 
             templateSetupConnection.SetupConnection();
         }
@@ -32,14 +30,14 @@ namespace SignalRClient
         {
             try
             {
-                _logger.LogInformation("[{time}] Realizando conexão...", DateTimeOffset.Now);
+                _logger.LogInformation("Realizando conexão...");
                 _connection.StartAsync().Wait();
-                _logger.LogInformation("[{time}] Conexão realizada", DateTimeOffset.Now);
+                _logger.LogInformation("Conexão realizada");
             }
             catch (Exception ex)
             {
-                _logger.LogError("[{time}] Erro ao realiza conexão", DateTimeOffset.Now);
-                _logger.LogError("{ex}", ex);
+                _logger.LogError("Erro ao realiza conexão");
+                _logger.LogError("{ex}", ex.Message);
             }
             finally
             {
@@ -49,39 +47,40 @@ namespace SignalRClient
                 {
                     try
                     {
-                        tryHandShakeTask = _connection.InvokeAsync("HandShake", new { Unidade = Worker.Unidade });
+                        tryHandShakeTask = _connection.InvokeAsync("HandShake", new { _configuration.Data.geral.Unidade });
                         tryHandShakeTask.Wait();
                         if (tryHandShakeTask.IsCompletedSuccessfully)
                         {
-                            _logger.LogInformation("[{time}] HandShake realizado com sucesso", DateTimeOffset.Now);
+                            _logger.LogInformation("HandShake realizado com sucesso");
                             break;
                         }
                         else if (tryHandShakeTask.IsCanceled)
                         {
-                            _logger.LogWarning("[{time}] HandShake cancelado", DateTimeOffset.Now);
+                            _logger.LogWarning("HandShake cancelado");
                         }
                         else if (tryHandShakeTask.IsFaulted)
                         {
-                            _logger.LogError("[{time}] Falha ao realizar o HandShake", DateTimeOffset.Now);
+                            _logger.LogError("Falha ao realizar o HandShake");
                         }
                         else
                         {
-                            _logger.LogCritical("[{time}] Ocorreu um erro não tratado durante o handshake", DateTimeOffset.Now);
+                            _logger.LogError("Ocorreu um erro não tratado durante o handshake");
                         }
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogCritical("[{time}] {ex}", ex);
+                        _logger.LogError("{ex}", ex.Message);
                     }
 
                 } while (!tryHandShakeTask.IsCompletedSuccessfully);
 
 
-                _logger.LogInformation("[{time}] Serviço na unidade {unidade} está executando", DateTimeOffset.Now, Unidade);
+                _logger.LogInformation("Serviço na unidade {unidade} está executando", _configuration.Data.geral.Unidade);
                 while (!stoppingToken.IsCancellationRequested)
                 {
+                    await Task.Delay(3000);
                 }
-                _logger.LogInformation("[{time}] Serviço na unidade {unidade} finalizado", DateTimeOffset.Now, Unidade);
+                _logger.LogInformation("Serviço na unidade {unidade} finalizado", _configuration.Data.geral.Unidade);
             }
             
         }

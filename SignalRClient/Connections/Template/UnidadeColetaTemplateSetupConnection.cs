@@ -1,35 +1,39 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Logging;
-using SignalRClient.Logging;
+using SignalRClient.Configurations;
 
 namespace SignalRClient.Connections.Template
 {
     public class UnidadeColetaTemplateSetupConnection : AbstractTemplateSetupConnection
     {
 
-        private static readonly ILogger<UnidadeColetaTemplateSetupConnection> _logger = LoggerProvider.GetLogger<UnidadeColetaTemplateSetupConnection>();
+        protected override ILogger _logger { get; set; }
 
-        public UnidadeColetaTemplateSetupConnection(HubConnection connection) : base(connection)
+        public UnidadeColetaTemplateSetupConnection(ILogger<UnidadeColetaTemplateSetupConnection> logger, CustomConfiguration configuration, ConnectionProvider connectionProvider) 
+            : base(logger, configuration, connectionProvider)
         {
-
         }
 
         public override void SetupConnectionEvents(HubConnection connection)
         {
             connection.On<string>("Imprime", (string etiqueta) =>
             {
-                _logger.LogInformation("[{time}] Etiqueta a ser impressa: {etiqueta}", DateTimeOffset.Now, etiqueta);
-                
-                Thread.Sleep(3000);
-                
-                _logger.LogInformation("[{time}] Etiqueta impressa: {etiqueta}", DateTimeOffset.Now, etiqueta);
+                _logger.LogInformation("Etiqueta a ser impressa: {etiqueta}", etiqueta);
 
-                connection.InvokeAsync("ImpressaoSucesso", new { Unidade = "Filial 3", Etiqueta = etiqueta });
+                Thread.Sleep(3000);
+
+                int binary = new Random().Next(0, 2);
+                if (binary == 0)
+                {
+                    _logger.LogError("Falha ao imprimir etiqueta: {etiqueta}", etiqueta);
+                    connection.InvokeAsync("FalhaImpressao", new { Unidade = _configuration.Data.geral.Unidade, Etiqueta = etiqueta });
+                    return;
+                }
+
+                _logger.LogInformation("Etiqueta impressa: {etiqueta}", etiqueta);
             });
         }
 
@@ -38,49 +42,49 @@ namespace SignalRClient.Connections.Template
             connection.Closed += async (error) =>
             {
                 
-                while (connection.State == HubConnectionState.Disconnected || connection.State == HubConnectionState.Reconnecting)
+                while (connection.State == HubConnectionState.Disconnected)
                 {
                     try
                     {
-                        _logger.LogInformation("[{time}] Tentando reconectar...", DateTimeOffset.Now);
+                        _logger.LogInformation("Tentando reconectar...");
                         await connection.StartAsync();
-                        _logger.LogInformation("[{time}] Conexão realizada", DateTimeOffset.Now);
+                        _logger.LogInformation("Conexão realizada");
 
                         Task tryHandShakeTask = null;
                         do
                         {
                             try
                             {
-                                tryHandShakeTask = connection.InvokeAsync("HandShake", new { Unidade = Worker.Unidade });
+                                tryHandShakeTask = connection.InvokeAsync("HandShake", new { Unidade = _configuration.Data.geral.Unidade });
                                 await tryHandShakeTask;
                                 if (tryHandShakeTask.IsCompletedSuccessfully)
                                 {
-                                    _logger.LogInformation("[{time}] HandShake realizado com sucesso", DateTimeOffset.Now);
+                                    _logger.LogInformation("HandShake realizado com sucesso");
                                     break;
                                 }
                                 else if (tryHandShakeTask.IsCanceled)
                                 {
-                                    _logger.LogWarning("[{time}] HandShake cancelado", DateTimeOffset.Now);
+                                    _logger.LogWarning("HandShake cancelado");
                                 }
                                 else if (tryHandShakeTask.IsFaulted)
                                 {
-                                    _logger.LogError("[{time}] Falha ao realizar o HandShake", DateTimeOffset.Now);
+                                    _logger.LogError("Falha ao realizar o HandShake");
                                 }
                                 else
                                 {
-                                    _logger.LogCritical("[{time}] Ocorreu um erro não tratado durante o handshake", DateTimeOffset.Now);
+                                    _logger.LogError("Ocorreu um erro não tratado durante o handshake");
                                 }
                             }
                             catch (Exception ex)
                             {
-                                _logger.LogCritical("[{time}] {ex}", ex);
+                                _logger.LogError("{ex}", ex);
                             }
 
                         } while (!tryHandShakeTask.IsCompletedSuccessfully);
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError("[{time}] Erro ao conectar", DateTimeOffset.Now);
+                        _logger.LogError("Erro ao conectar");
                         _logger.LogDebug("{ex}", ex);
                         _logger.LogError("{ex}", ex.Message);
                     }
@@ -96,41 +100,7 @@ namespace SignalRClient.Connections.Template
         /// <param name="connection"></param>
         public override void SetupOnReconnectConnection(HubConnection connection)
         {
-            connection.Reconnected += async (string s) =>
-            {
-                Task tryHandShakeTask = null;
-                do
-                {
-                    try
-                    {
-                        tryHandShakeTask = connection.InvokeAsync("HandShake", new { Unidade = Worker.Unidade });
-                        await tryHandShakeTask;
-                        if (tryHandShakeTask.IsCompletedSuccessfully)
-                        {
-                            _logger.LogInformation("[{time}] HandShake realizado com sucesso", DateTimeOffset.Now);
-                            break;
-                        }
-                        else if (tryHandShakeTask.IsCanceled)
-                        {
-                            _logger.LogWarning("[{time}] HandShake cancelado", DateTimeOffset.Now);
-                        }
-                        else if (tryHandShakeTask.IsFaulted)
-                        {
-                            _logger.LogError("[{time}] Falha ao realizar o HandShake", DateTimeOffset.Now);
-                        }
-                        else
-                        {
-                            _logger.LogCritical("[{time}] Ocorreu um erro não tratado durante o handshake", DateTimeOffset.Now);
-                        }
-                    }
-                    catch (Exception ex) 
-                    {
-                        _logger.LogCritical("[{time}] {ex}", ex);
-                    }
-
-                } while (!tryHandShakeTask.IsCompletedSuccessfully);
-
-            };
+            base.SetupOnReconnectConnection(connection);
         }
 
         /// <summary>

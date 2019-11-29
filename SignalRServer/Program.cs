@@ -1,28 +1,31 @@
 ﻿using System;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using System.Collections.Generic;
 using System.Globalization;
 using SignalRServer.Caller.Controllers;
+using SignalRClient.Logging;
+using Microsoft.Extensions.Logging;
 
 namespace SignalRServer
 {
     public partial class Program
     {
 
+        private static readonly ILogger<Program> _logger = LoggerProvider.GetLogger<Program>();
+
         private static IWebHost wb = null;
 
-        private static TesteCallerController _testeCallerController;
-        public static TesteCallerController TesteCallerController
+        private static ImprimeCallerController _imprimeCallerController;
+        public static ImprimeCallerController ImprimeCallerController
         {
             get
             {
-                if (_testeCallerController == null)
-                    _testeCallerController = new TesteCallerController();
+                if (_imprimeCallerController == null)
+                    _imprimeCallerController = new ImprimeCallerController();
 
-                return _testeCallerController;
+                return _imprimeCallerController;
             }
         }
 
@@ -85,7 +88,7 @@ namespace SignalRServer
                     var nEtiqueta = new Random().Next(0, 99);
 
                     var p = new Pendencia($"Filial {nFilial}", $"etq{nEtiqueta}un{nFilial}", Pendencia.StatusPendencia.Open);
-                    Console.WriteLine($"Criando Pendência: {p.unidade} -> {p.etiqueta}");
+                    _logger.LogInformation("[{time} Criando Pendência: {unidade} -> {etiqueta}]", DateTimeOffset.Now, p.unidade, p.etiqueta);
                     lstPendencias.Add(p);
                 }
 
@@ -120,13 +123,5 @@ namespace SignalRServer
             //lstPendencias.Add(new Pendencia("Filial 3", "etq6un3", Pendencia.StatusPendencia.Open));
             //lstPendencias.Add(new Pendencia("Filial 3", "etq7un3", Pendencia.StatusPendencia.Open));
         }
-
-        public static string GetTime()
-        {
-            return string.Format("({0}) ", DateTime.UtcNow.ToString("dd-MM-yyyy HH:mm:ss.ffffff",
-                                            CultureInfo.InvariantCulture));
-        }
-
-
     }
 }
