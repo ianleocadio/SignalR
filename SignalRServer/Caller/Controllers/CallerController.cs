@@ -1,13 +1,14 @@
-﻿using SignalRServer.Caller.Models;
+﻿using Microsoft.Extensions.Logging;
+using SignalRServer.Caller.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace SignalRServer.Caller.Controllers
 {
-    public class CallerController<T> where T : ACaller
+    public abstract class CallerController<T> where T : ACaller
     {
-
+        protected ILogger _logger { get; set; }
         public bool AtLeastOneCaller
         {
             get
@@ -15,27 +16,15 @@ namespace SignalRServer.Caller.Controllers
                 return Callers.Count > 0;
             }
         }
-
         public List<T> Callers { get; }
 
-        public CallerController()
+        public CallerController(ILogger logger)
         {
+            _logger = logger;
             Callers = new List<T>();
         }
 
-        public void AddCaller(T t)
-        {
-            if (t == null)
-            {
-                Console.WriteLine("Caller não foi criado pois não foi passado informações do client");
-                return;
-            }
-
-            if (!EnableCaller(t))
-            {
-                Callers.Add(t);
-            }
-        }
+        public abstract void AddCaller(T t);
 
         protected virtual bool EnableCaller(T t)
         {

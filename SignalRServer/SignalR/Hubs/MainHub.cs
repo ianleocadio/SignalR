@@ -5,6 +5,7 @@ using SignalRServer.Caller.Models;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using SignalRClient.Logging;
+using SignalRServer.Caller.Controllers;
 
 namespace SignalRServer.SignalR.Hubs
 {
@@ -12,8 +13,14 @@ namespace SignalRServer.SignalR.Hubs
     [Authorize]
     public class MainHub : Hub
     {
+        private readonly ILogger<MainHub> _logger;
+        private readonly ImprimeCallerController _imprimeCallerController;
 
-        private readonly ILogger<MainHub> _logger = LoggerProvider.GetLogger<MainHub>();
+        public MainHub(ILogger<MainHub> logger, ImprimeCallerController imprimeCallerController) : base()
+        {
+            _logger = logger;
+            _imprimeCallerController = imprimeCallerController;
+        }
 
         #region DTO's para mapear paramêtros da requisição
         public class HandShakeRequestParameters
@@ -33,14 +40,14 @@ namespace SignalRServer.SignalR.Hubs
             if (req?.Unidade == null)
                 return;
 
-            _logger.LogInformation("[{time}] {Unidade} Informou que está aberta a solicitações", DateTimeOffset.Now, req.Unidade);
+            _logger.LogInformation("{Unidade} Informou que está aberta a solicitações", req.Unidade);
 
             // Adiciona Caller
-            Program.ImprimeCallerController.AddCaller(new ImprimeCaller(req.Unidade, Context.User.Identity.Name, Clients.Caller, true));
+            _imprimeCallerController.AddCaller(new ImprimeCaller(req.Unidade, Context.User.Identity.Name, Clients.Caller, true));
 
-            _logger.LogInformation("[{time}] Caller: {Unidade} adicionado", DateTimeOffset.Now, req.Unidade);
+            _logger.LogInformation("Caller: {Unidade} adicionado", req.Unidade);
 
-            Program.ImprimeCallerController.RunInstance();
+            _imprimeCallerController.RunInstance();
 
         }
 
@@ -49,7 +56,7 @@ namespace SignalRServer.SignalR.Hubs
             if (req?.Unidade == null || req?.Etiqueta == null)
                 return;
 
-            _logger.LogWarning("[{time}] {Unidade} Informou que houve erro ao imprimir a etiqueta: {etiqueta}", DateTimeOffset.Now, req.Unidade, req.Etiqueta);
+            _logger.LogWarning("{Unidade} Informou que houve erro ao imprimir a etiqueta: {etiqueta}", req.Unidade, req.Etiqueta);
 
             // Tratamentos...
             // -> Reenviar pendência ?
@@ -58,16 +65,16 @@ namespace SignalRServer.SignalR.Hubs
         public override async Task OnConnectedAsync()
         {
 
-            _logger.LogWarning("[{time}] Connected: {Client}", DateTimeOffset.Now, Context.User.Identity.Name);
+            _logger.LogInformation("Connected: {Client}", Context.User.Identity.Name);
 
             await base.OnConnectedAsync();
         }
 
         public override async Task OnDisconnectedAsync(Exception ex)
         {
-            _logger.LogWarning("[{time}] Disconnected: {Client}", DateTimeOffset.Now, Context.User.Identity.Name);
+            _logger.LogWarning("Disconnected: {Client}", Context.User.Identity.Name);
 
-            Program.ImprimeCallerController.DisableCaller(Context.User.Identity.Name);
+            _imprimeCallerController.DisableCaller(Context.User.Identity.Name);
 
             await base.OnDisconnectedAsync(ex);
         }

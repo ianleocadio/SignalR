@@ -10,12 +10,9 @@ namespace SignalRServer.Caller.Controllers
 {
     public class ImprimeCallerController : CallerController<ImprimeCaller>
     {
-
-        private readonly ILogger<ImprimeCallerController> _logger = LoggerProvider.GetLogger<ImprimeCallerController>();
-
-        private CancellationTokenSource _cancellationTokenSource;
+        private CancellationTokenSource _cancellationTokenSource;   
+        
         private Task _task;
-
         public Task TaskInstance
         {
             get
@@ -28,6 +25,10 @@ namespace SignalRServer.Caller.Controllers
 
                 return _task;
             }
+        }
+
+        public ImprimeCallerController(ILogger<ImprimeCallerController> logger) : base(logger)
+        {
         }
 
         public void RunInstance()
@@ -45,9 +46,23 @@ namespace SignalRServer.Caller.Controllers
             TaskInstance.Start();
         }
 
+        public override void AddCaller(ImprimeCaller imprimeCaller)
+        {
+            if (imprimeCaller == null)
+            {
+                _logger.LogWarning("ImprimeCaller não foi criado pois não foi passado informações do client");
+                return;
+            }
+
+            if (!EnableCaller(imprimeCaller))
+            {
+                Callers.Add(imprimeCaller);
+            }
+        }
+
         public void Run()
         {
-            _logger.LogInformation("[{time}] Executando...", DateTimeOffset.Now);
+            _logger.LogInformation("Executando...");
 
             // Pode ser controlado por fora atráves de um CancellationToken
             while (true)
@@ -64,12 +79,13 @@ namespace SignalRServer.Caller.Controllers
                     {
                         foreach (var pendencia in lstPendencia.Where(p => p?.unidade == Caller.Unidade))
                         {
-
+                            
+                            _logger.LogInformation("Executando {Event} pela Unidade: {Unidade} com a etiqueta: {Etiqueta}", Caller.Event, Caller.Unidade, pendencia.etiqueta);
                             Caller.Execute(pendencia.etiqueta)
                                 .ContinueWith((task) =>
                                 {
                                     Program.lstPendencias.Remove(pendencia);
-                                    _logger.LogInformation("[{time}] Removeu pendência: {unidade}/{etiqueta}", DateTimeOffset.Now, pendencia.unidade, pendencia.etiqueta);
+                                    _logger.LogInformation("Removeu pendência: {unidade}/{etiqueta}", pendencia.unidade, pendencia.etiqueta);
                                 });
 
                             pendencia.status = Program.Pendencia.StatusPendencia.Processing;
@@ -80,11 +96,10 @@ namespace SignalRServer.Caller.Controllers
                 catch (NullReferenceException) { }
                 catch (Exception ex)
                 {
-                    _logger.LogError("[{time}] {ex}", DateTimeOffset.Now, ex);
+                    _logger.LogError("{ex}", ex);
                 }
             }
 
-            //_logger.LogInformation("[{time}] Finalizado", DateTimeOffset.Now);
         }
     }
 }

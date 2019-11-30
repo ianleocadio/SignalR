@@ -7,7 +7,7 @@ namespace SignalRClient.Connections.Template
 {
     public abstract class AbstractTemplateSetupConnection
     {
-        protected abstract ILogger _logger { get; set; }
+        protected ILogger _logger { get; set; }
         protected readonly IConfiguration _configuration;
         private readonly HubConnection Connection;
 

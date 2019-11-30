@@ -1,6 +1,7 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Logging.EventLog;
+using Serilog;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -8,51 +9,27 @@ using System.Text;
 
 namespace SignalRClient.Logging
 {
-    public class LoggerProvider : IDisposable
+    public class LoggerProvider
     {
+        private readonly IConfiguration _configuration;
+        private readonly LoggerConfiguration _loggerConfiguration;
 
-        private readonly ILoggerFactory loggerFactory;
-        private readonly ConcurrentDictionary<string, ILogger> _loggers = new ConcurrentDictionary<string, ILogger>();
-        
-        private static LoggerProvider _instance;
-
-        public LoggerProvider()
+        public LoggerProvider(IConfiguration configuration)
         {
-            loggerFactory = CreateLoggerFactory();
+            _configuration = configuration;
+            _loggerConfiguration = CreateLoggerFactory();
         }
 
-        public static ILogger<T> GetLogger<T>()
-        {
-            if (_instance == null)
-                _instance = new LoggerProvider();
+        public ILogger GetLogger() => _loggerConfiguration.CreateLogger();
 
-            return _instance.CreateLogger<T>(typeof(T).Name);
-        }
-
-        private ILogger<T> CreateLogger<T>(string name)
+        private LoggerConfiguration CreateLoggerFactory() 
         {
-            return (ILogger<T>)_loggers.GetOrAdd(name, name => loggerFactory.CreateLogger<T>());
-        }
-
-        public ILoggerFactory CreateLoggerFactory() 
-        {
-            return LoggerFactory.Create(builder =>
-            {
-                builder
-                    .ClearProviders()
-                    .AddProvider(new EventLogLoggerProvider())
-                    .AddFilter<EventLogLoggerProvider>(level => level >= LogLevel.Information)
-                    .AddFilter("Microsoft", LogLevel.Warning)
-                    .AddFilter("System", LogLevel.Warning)
-                    //.AddFilter("LoggingConsoleApp.Program", LogLevel.Debug)
-                    .AddConsole()
-                    .AddEventLog();
-            });
-        }
-
-    public void Dispose()
-        {
-            _loggers.Clear();
+            return new LoggerConfiguration()
+                .MinimumLevel.Debug()
+                .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
+                .Enrich.FromLogContext()
+                .WriteTo.File(_configuration["Logging:LogFilePath"])
+                .WriteTo.ColoredConsole();
         }
     }
 }

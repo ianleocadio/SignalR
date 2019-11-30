@@ -4,7 +4,10 @@ using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using SignalRServer.Authentication;
+using SignalRServer.Caller.Controllers;
+using SignalRServer.Caller.Models;
 using SignalRServer.SignalR.Hubs;
 using System.Threading.Tasks;
 
@@ -46,8 +49,12 @@ namespace SignalRServer
 
             services.AddAuthorization();
 
+            services.AddSingleton<IUserIdProvider, NameUserIdProvider>()
+                .AddSingleton<ImprimeCallerController>((provider) => 
+                    new ImprimeCallerController(provider.GetRequiredService<ILogger<ImprimeCallerController>>()));
+
             services.AddSignalR();
-            services.AddSingleton<IUserIdProvider, NameUserIdProvider>();
+
         }
 
         public void Configure(IApplicationBuilder app)

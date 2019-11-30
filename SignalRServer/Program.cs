@@ -3,32 +3,17 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using System.Collections.Generic;
-using System.Globalization;
-using SignalRServer.Caller.Controllers;
+using System.Diagnostics;
+using Microsoft.Extensions.Configuration;
 using SignalRClient.Logging;
-using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace SignalRServer
 {
     public partial class Program
     {
 
-        private static readonly ILogger<Program> _logger = LoggerProvider.GetLogger<Program>();
-
-        private static IWebHost wb = null;
-
-        private static ImprimeCallerController _imprimeCallerController;
-        public static ImprimeCallerController ImprimeCallerController
-        {
-            get
-            {
-                if (_imprimeCallerController == null)
-                    _imprimeCallerController = new ImprimeCallerController();
-
-                return _imprimeCallerController;
-            }
-        }
-
+        #region Pendência
         public class Pendencia
         {
             public enum StatusPendencia
@@ -51,32 +36,69 @@ namespace SignalRServer
         }
 
         public static List<Pendencia> lstPendencias = new List<Pendencia>();
+        #endregion
 
         public static void Main(string[] args)
         {
             CreateLstPendencia();
 
+            #region Contruíndo Configuração
+            var configFilePath = "appsettings.json";
+
+            if (Debugger.IsAttached)
+                configFilePath = "appsettings.Development.json";
+
+            var builtConfig = new ConfigurationBuilder()
+                                .AddJsonFile(configFilePath, optional: false, reloadOnChange: false)
+                                .AddCommandLine(args)
+                                .Build();
+            #endregion
+
+            #region Criando Logger
+            Log.Logger = new LoggerProvider(builtConfig).GetLogger();
+            #endregion
+
             Parallel.Invoke(() =>
             {
-                RunApp();
+                RunApp(Log.Logger);
             },
             () =>
             {
-                RunWebHost();
+                RunWebHost(Log.Logger, builtConfig);
             });
         }
 
-        public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
-            WebHost.CreateDefaultBuilder(args)
-                .UseStartup<Startup>();
-
-        public static void RunWebHost()
+        public static IWebHostBuilder CreateWebHostBuilder(ILogger logger, IConfiguration configuration, string[] args)
         {
-            wb = CreateWebHostBuilder(new string[] { }).Build();
-            wb.Run();
+
+            IWebHostBuilder webHostBuilder = null;
+            try
+            {
+                Log.Information("Iniciando aplicação");
+                webHostBuilder = WebHost.CreateDefaultBuilder(args)
+                          .ConfigureAppConfiguration((hostContext, config) => config.AddConfiguration(configuration))
+                          .UseSerilog(logger: logger)
+                          .UseStartup<Startup>();
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, "Erro ao construir aplicação");
+                throw ex;
+            }
+            finally
+            {
+                Log.CloseAndFlush();
+            }
+
+            return webHostBuilder;
         }
 
-        public static void RunApp()
+        public static void RunWebHost(ILogger logger, IConfiguration configuration)
+        {
+            CreateWebHostBuilder(logger, configuration, new string[] { }).Build().Run();
+        }
+
+        public static void RunApp(ILogger logger)
         {
             var console = Console.ReadKey();
 
@@ -88,7 +110,7 @@ namespace SignalRServer
                     var nEtiqueta = new Random().Next(0, 99);
 
                     var p = new Pendencia($"Filial {nFilial}", $"etq{nEtiqueta}un{nFilial}", Pendencia.StatusPendencia.Open);
-                    _logger.LogInformation("[{time} Criando Pendência: {unidade} -> {etiqueta}]", DateTimeOffset.Now, p.unidade, p.etiqueta);
+                    logger.Information($"Criando Pendência: {p.unidade} -> {p.etiqueta}");
                     lstPendencias.Add(p);
                 }
 

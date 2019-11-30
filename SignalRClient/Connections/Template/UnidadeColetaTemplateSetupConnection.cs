@@ -10,8 +10,6 @@ namespace SignalRClient.Connections.Template
     public class UnidadeColetaTemplateSetupConnection : AbstractTemplateSetupConnection
     {
 
-        protected override ILogger _logger { get; set; }
-
         public UnidadeColetaTemplateSetupConnection(ILogger<UnidadeColetaTemplateSetupConnection> logger, IConfiguration configuration, ConnectionProvider connectionProvider) 
             : base(logger, configuration, connectionProvider)
         {
