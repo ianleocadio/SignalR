@@ -1,31 +1,31 @@
 ﻿using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using SignalRClient.Configurations;
 using System;
 
 namespace SignalRClient.Connections
 {
     public class ConnectionProvider
     {
-        private readonly ILogger _logger;
         public HubConnection Connection;
 
-        public ConnectionProvider(ILogger<ConnectionProvider> logger, CustomConfiguration configuration)
+        public ConnectionProvider(ILogger<ConnectionProvider> logger, IConfiguration configuration)
         {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-
             try
             {
                 Connection = new HubConnectionBuilder()
-                       .WithUrl(configuration.Data.serverConnection.URI, options =>
+                       .WithUrl(configuration["ServerConnection:URI"], options =>
                        {
-                           options.Headers.Add("Authorization", $"Basic {configuration.Data.authentication.GetCredentials()}");
+                           var username = configuration["Authentication:Username"];
+                           var password = configuration["Authentication:Password"];
+                           var credetials = Convert.ToBase64String(System.Text.Encoding.GetEncoding("ISO-8859-1").GetBytes(username + ":" + password));
+                           options.Headers.Add("Authorization", $"Basic {credetials}");
                        })
                        .Build();
             }
             catch (Exception ex)
             {
-                _logger.LogInformation("Erro ao construir a conexão com o servidor");
+                logger.LogInformation("Erro ao construir a conexão com o servidor");
                 throw ex;
             }
         }

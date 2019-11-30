@@ -1,18 +1,17 @@
 ﻿using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SignalRClient.Connections.Template
 {
     public abstract class AbstractTemplateSetupConnection
     {
         protected abstract ILogger _logger { get; set; }
-        protected readonly CustomConfiguration _configuration;
+        protected readonly IConfiguration _configuration;
         private readonly HubConnection Connection;
 
-        protected AbstractTemplateSetupConnection(ILogger logger, CustomConfiguration configuration, ConnectionProvider connectionProvider)
+        protected AbstractTemplateSetupConnection(ILogger logger, IConfiguration configuration, ConnectionProvider connectionProvider)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));

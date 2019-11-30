@@ -2,8 +2,8 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using SignalRClient.Configurations;
 
 namespace SignalRClient.Connections.Template
 {
@@ -12,7 +12,7 @@ namespace SignalRClient.Connections.Template
 
         protected override ILogger _logger { get; set; }
 
-        public UnidadeColetaTemplateSetupConnection(ILogger<UnidadeColetaTemplateSetupConnection> logger, CustomConfiguration configuration, ConnectionProvider connectionProvider) 
+        public UnidadeColetaTemplateSetupConnection(ILogger<UnidadeColetaTemplateSetupConnection> logger, IConfiguration configuration, ConnectionProvider connectionProvider) 
             : base(logger, configuration, connectionProvider)
         {
         }
@@ -29,7 +29,7 @@ namespace SignalRClient.Connections.Template
                 if (binary == 0)
                 {
                     _logger.LogError("Falha ao imprimir etiqueta: {etiqueta}", etiqueta);
-                    connection.InvokeAsync("FalhaImpressao", new { Unidade = _configuration.Data.geral.Unidade, Etiqueta = etiqueta });
+                    connection.InvokeAsync("FalhaImpressao", new { Unidade = _configuration["Geral:Unidade"], Etiqueta = etiqueta });
                     return;
                 }
 
@@ -55,7 +55,7 @@ namespace SignalRClient.Connections.Template
                         {
                             try
                             {
-                                tryHandShakeTask = connection.InvokeAsync("HandShake", new { Unidade = _configuration.Data.geral.Unidade });
+                                tryHandShakeTask = connection.InvokeAsync("HandShake", new { Unidade = _configuration["Geral:Unidade"] });
                                 await tryHandShakeTask;
                                 if (tryHandShakeTask.IsCompletedSuccessfully)
                                 {

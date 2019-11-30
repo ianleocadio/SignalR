@@ -5,19 +5,18 @@ using SignalRClient.Connections.Template;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using SignalRClient.Configurations;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 
 namespace SignalRClient
 {
     public class Worker : BackgroundService
     {
         private readonly ILogger<Worker> _logger;
-        private readonly CustomConfiguration _configuration;
+        private readonly IConfiguration _configuration;
         private readonly HubConnection _connection;
 
-        public Worker(ILogger<Worker> logger, CustomConfiguration configuration, ConnectionProvider connectionProvider, AbstractTemplateSetupConnection templateSetupConnection)
+        public Worker(ILogger<Worker> logger, IConfiguration configuration, ConnectionProvider connectionProvider, AbstractTemplateSetupConnection templateSetupConnection)
         {
             _logger = logger;
             _configuration = configuration;
@@ -47,7 +46,7 @@ namespace SignalRClient
                 {
                     try
                     {
-                        tryHandShakeTask = _connection.InvokeAsync("HandShake", new { _configuration.Data.geral.Unidade });
+                        tryHandShakeTask = _connection.InvokeAsync("HandShake", new { Unidade = _configuration["Geral:Unidade"] });
                         tryHandShakeTask.Wait();
                         if (tryHandShakeTask.IsCompletedSuccessfully)
                         {
@@ -76,12 +75,12 @@ namespace SignalRClient
                 } while (!tryHandShakeTask.IsCompletedSuccessfully);
 
 
-                _logger.LogInformation("Serviço na unidade {unidade} está executando", _configuration.Data.geral.Unidade);
+                _logger.LogInformation("Serviço na unidade {unidade} está executando", _configuration["Geral:Unidade"]);
                 while (!stoppingToken.IsCancellationRequested)
                 {
                     await Task.Delay(3000);
                 }
-                _logger.LogInformation("Serviço na unidade {unidade} finalizado", _configuration.Data.geral.Unidade);
+                _logger.LogInformation("Serviço na unidade {unidade} finalizado", _configuration["Geral:Unidade"]);
             }
             
         }
