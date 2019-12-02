@@ -9,6 +9,7 @@ using SignalRServer.Authentication;
 using SignalRServer.Caller.Controllers;
 using SignalRServer.Caller.Models;
 using SignalRServer.SignalR.Hubs;
+using System;
 using System.Threading.Tasks;
 
 namespace SignalRServer
@@ -53,7 +54,11 @@ namespace SignalRServer
                 .AddSingleton<ImprimeCallerController>((provider) => 
                     new ImprimeCallerController(provider.GetRequiredService<ILogger<ImprimeCallerController>>()));
 
-            services.AddSignalR();
+            services.AddSignalR(hubOptions =>
+            {
+                hubOptions.EnableDetailedErrors = true;
+                hubOptions.KeepAliveInterval = TimeSpan.FromSeconds(3);
+            });
 
         }
 

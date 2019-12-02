@@ -71,7 +71,7 @@ namespace SignalRServer.SignalR.Hubs
         public override async Task OnDisconnectedAsync(Exception ex)
         {
             _logger.LogWarning("Disconnected: {Client}", Context.UserIdentifier);
-            Console.WriteLine(ex.Message);
+
             _imprimeCallerController.RemoveCaller(Context.UserIdentifier);
 
             await base.OnDisconnectedAsync(ex);
