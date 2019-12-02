@@ -46,19 +46,6 @@ namespace SignalRServer.Caller.Controllers
             TaskInstance.Start();
         }
 
-        public override void AddCaller(ImprimeCaller imprimeCaller)
-        {
-            if (imprimeCaller == null)
-            {
-                _logger.LogWarning("ImprimeCaller não foi criado pois não foi passado informações do client");
-                return;
-            }
-
-            if (!EnableCaller(imprimeCaller))
-            {
-                Callers.Add(imprimeCaller);
-            }
-        }
 
         public void Run()
         {
@@ -75,11 +62,10 @@ namespace SignalRServer.Caller.Controllers
                     if (lstPendencia == null || lstPendencia.Count <= 0)
                         continue;
 
-                    foreach (var Caller in Callers.Where(c => c.Alive).ToList())
+                    foreach (var Caller in Callers.Values.ToList())
                     {
                         foreach (var pendencia in lstPendencia.Where(p => p?.unidade == Caller.Unidade))
                         {
-                            
                             _logger.LogInformation("Executando {Event} pela Unidade: {Unidade} com a etiqueta: {Etiqueta}", Caller.Event, Caller.Unidade, pendencia.etiqueta);
                             Caller.Execute(pendencia.etiqueta)
                                 .ContinueWith((task) =>

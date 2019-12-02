@@ -41,9 +41,8 @@ namespace SignalRServer.SignalR.Hubs
                 return;
 
             _logger.LogInformation("{Unidade} Informou que está aberta a solicitações", req.Unidade);
-
             // Adiciona Caller
-            _imprimeCallerController.AddCaller(new ImprimeCaller(req.Unidade, Context.User.Identity.Name, Clients.Caller, true));
+            _imprimeCallerController.AddCaller(new ImprimeCaller(req.Unidade, Context, Clients.Caller, true));
 
             _logger.LogInformation("Caller: {Unidade} adicionado", req.Unidade);
 
@@ -64,17 +63,16 @@ namespace SignalRServer.SignalR.Hubs
 
         public override async Task OnConnectedAsync()
         {
-
-            _logger.LogInformation("Connected: {Client}", Context.User.Identity.Name);
+            _logger.LogInformation("Connected: {Client}", Context.UserIdentifier);
 
             await base.OnConnectedAsync();
         }
 
         public override async Task OnDisconnectedAsync(Exception ex)
         {
-            _logger.LogWarning("Disconnected: {Client}", Context.User.Identity.Name);
-
-            _imprimeCallerController.DisableCaller(Context.User.Identity.Name);
+            _logger.LogWarning("Disconnected: {Client}", Context.UserIdentifier);
+            Console.WriteLine(ex.Message);
+            _imprimeCallerController.RemoveCaller(Context.UserIdentifier);
 
             await base.OnDisconnectedAsync(ex);
         }

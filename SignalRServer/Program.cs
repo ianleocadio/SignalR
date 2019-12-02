@@ -40,7 +40,7 @@ namespace SignalRServer
 
         public static void Main(string[] args)
         {
-            CreateLstPendencia();
+            //CreateLstPendencia();
 
             #region Contruíndo Configuração
             var configFilePath = "appsettings.json";
@@ -56,6 +56,7 @@ namespace SignalRServer
 
             #region Criando Logger
             Log.Logger = new LoggerProvider(builtConfig).GetLogger();
+            Log.Information($"Log file: {configFilePath}");
             #endregion
 
             Parallel.Invoke(() =>

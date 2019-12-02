@@ -9,18 +9,18 @@ namespace SignalRServer.Caller.Models
     public class ImprimeCaller : ACaller
     {
         public override string Event { get => "Imprime"; }
+
         public string Unidade;
 
-        public ImprimeCaller(string unidade, string userAuthentication, IClientProxy caller, bool alive)
-            : base(userAuthentication, caller, alive)
+        public ImprimeCaller(string unidade, HubCallerContext context, IClientProxy client, bool alive)
+            : base(context, client, alive)
         {
             Unidade = unidade;
         }
 
         public override async Task Execute(params object[] args)
         {
-            
-            await Caller.SendAsync(Event, args[0]?.ToString());
+            await Client.SendAsync(Event, args[0]?.ToString());
         }
     }
 }

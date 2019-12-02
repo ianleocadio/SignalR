@@ -8,6 +8,7 @@ using SignalRClient.Connections;
 using SignalRClient.Connections.Template;
 using SignalRClient.Logging;
 using System.Diagnostics;
+using SignalRClient.Execute;
 
 namespace SignalRClient
 {
@@ -60,14 +61,17 @@ namespace SignalRClient
                     #endregion
 
                     #region Scoped's
-                    services.AddScoped<AbstractTemplateSetupConnection, UnidadeColetaTemplateSetupConnection>((provider) =>
+                    services.AddScoped<HandShake>()
+                    .AddScoped<AbstractTemplateSetupConnection, UnidadeColetaTemplateSetupConnection>((provider) =>
                     {
                         ILogger<UnidadeColetaTemplateSetupConnection> logger = provider.GetRequiredService<ILogger<UnidadeColetaTemplateSetupConnection>>();
                         IConfiguration config = provider.GetRequiredService<IConfiguration>();
                         ConnectionProvider connectionProvider = provider.GetRequiredService<ConnectionProvider>();
+                        HandShake handShake = provider.GetRequiredService<HandShake>();
 
-                        return new UnidadeColetaTemplateSetupConnection(logger, config, connectionProvider);
-                    });
+                        return new UnidadeColetaTemplateSetupConnection(logger, config, connectionProvider, handShake);
+                    })
+                    ;
                     #endregion
                 })
                 .UseSerilog(logger: Log.Logger);

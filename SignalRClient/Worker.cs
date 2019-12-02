@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
+using SignalRClient.Execute;
 
 namespace SignalRClient
 {
@@ -15,12 +16,16 @@ namespace SignalRClient
         private readonly ILogger<Worker> _logger;
         private readonly IConfiguration _configuration;
         private readonly HubConnection _connection;
+        private readonly HandShake _handShake;
 
-        public Worker(ILogger<Worker> logger, IConfiguration configuration, ConnectionProvider connectionProvider, AbstractTemplateSetupConnection templateSetupConnection)
+        public Worker(ILogger<Worker> logger, IConfiguration configuration, 
+            ConnectionProvider connectionProvider, AbstractTemplateSetupConnection templateSetupConnection,
+            HandShake handShake)
         {
             _logger = logger;
             _configuration = configuration;
             _connection = connectionProvider?.Connection;
+            _handShake = handShake;
 
             templateSetupConnection.SetupConnection();
         }
@@ -30,57 +35,38 @@ namespace SignalRClient
             try
             {
                 _logger.LogInformation("Realizando conexão...");
-                _connection.StartAsync().Wait();
+                var taskConnection = _connection.StartAsync();
+                await taskConnection;
+                while (!taskConnection.IsCompletedSuccessfully)
+                {
+                    await Task.Delay(10000);
+                    _logger.LogInformation("Tentando realizar conexão...");
+                    taskConnection = _connection.StartAsync();
+                    await taskConnection;
+                }
+
                 _logger.LogInformation("Conexão realizada");
+
+                var taskHandShake = _handShake.ExecuteAsync();
+                await taskHandShake;
+                while (!taskHandShake.IsCompletedSuccessfully)
+                {
+                    await Task.Delay(10000);
+                    taskHandShake = _handShake.ExecuteAsync();
+                    await taskHandShake;
+                }
+
+                _logger.LogInformation("Serviço na unidade {unidade} está executando", _configuration["Geral:Unidade"]);
+                while (!stoppingToken.IsCancellationRequested)
+                {
+                    await Task.Delay(10000);
+                }
+                _logger.LogInformation("Serviço na unidade {unidade} finalizado", _configuration["Geral:Unidade"]);
             }
             catch (Exception ex)
             {
                 _logger.LogError("Erro ao realiza conexão");
                 _logger.LogError("{ex}", ex.Message);
-            }
-            finally
-            {
-
-                Task tryHandShakeTask = null;
-                do
-                {
-                    try
-                    {
-                        tryHandShakeTask = _connection.InvokeAsync("HandShake", new { Unidade = _configuration["Geral:Unidade"] });
-                        tryHandShakeTask.Wait();
-                        if (tryHandShakeTask.IsCompletedSuccessfully)
-                        {
-                            _logger.LogInformation("HandShake realizado com sucesso");
-                            break;
-                        }
-                        else if (tryHandShakeTask.IsCanceled)
-                        {
-                            _logger.LogWarning("HandShake cancelado");
-                        }
-                        else if (tryHandShakeTask.IsFaulted)
-                        {
-                            _logger.LogError("Falha ao realizar o HandShake");
-                        }
-                        else
-                        {
-                            _logger.LogError("Ocorreu um erro não tratado durante o handshake");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError("{ex}", ex.Message);
-                        await Task.Delay(5000);
-                    }
-
-                } while (!tryHandShakeTask.IsCompletedSuccessfully);
-
-
-                _logger.LogInformation("Serviço na unidade {unidade} está executando", _configuration["Geral:Unidade"]);
-                while (!stoppingToken.IsCancellationRequested)
-                {
-                    await Task.Delay(3000);
-                }
-                _logger.LogInformation("Serviço na unidade {unidade} finalizado", _configuration["Geral:Unidade"]);
             }
             
         }

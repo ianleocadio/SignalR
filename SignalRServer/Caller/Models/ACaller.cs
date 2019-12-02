@@ -10,21 +10,30 @@ namespace SignalRServer.Caller.Models
     public abstract class ACaller
     {
         public abstract string Event { get; }
-        public string UserAuthentication { get; set; }
-        public IClientProxy Caller { get; set; }
+        
+        protected HubCallerContext Context { get; private set; }
+        public IClientProxy Client { get; private set; }
+
+        public string UserAuthentication => Context.UserIdentifier;
+        public string ConnectionId => Context.ConnectionId;
+        
         public bool Alive { get; set; }
 
-        protected ACaller(string userAuthentication, IClientProxy caller, bool alive)
+        protected ACaller(HubCallerContext context, IClientProxy client, bool alive)
         {
-            UserAuthentication = userAuthentication ?? throw new ArgumentNullException(nameof(userAuthentication));
-            Caller = caller ?? throw new ArgumentNullException(nameof(caller));
+            Context = context ?? throw new ArgumentNullException(nameof(context));
+            Client = client ?? throw new ArgumentNullException(nameof(client));
             Alive = alive;
         }
 
         public virtual async Task Execute(params object[] args)
         {
-            await Caller.SendAsync(Event, args);
+            await Client.SendAsync(Event, args);
         }
 
+        public virtual void CloseConnection()
+        {
+            Context.Abort();
+        }
     }
 }

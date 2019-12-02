@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using SignalRServer.Caller.Models;
 using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Linq;
 
 namespace SignalRServer.Caller.Controllers
@@ -16,34 +16,26 @@ namespace SignalRServer.Caller.Controllers
                 return Callers.Count > 0;
             }
         }
-        public List<T> Callers { get; }
+        public ConcurrentDictionary<string, T> Callers { get; }
 
         public CallerController(ILogger logger)
         {
             _logger = logger;
-            Callers = new List<T>();
+            Callers = new ConcurrentDictionary<string, T>(Environment.ProcessorCount*2, 20);
         }
 
-        public abstract void AddCaller(T t);
-
-        protected virtual bool EnableCaller(T t)
+        public void AddCaller(T t)
         {
-            var caller = Callers.FirstOrDefault(c => c.UserAuthentication == t.UserAuthentication);
-            if (caller != null)
-            {
-                caller.Alive = true;
-                caller.Caller = t.Caller;
-                return true;
-            }
-
-            return false;
+            Callers.AddOrUpdate(t.UserAuthentication, t,
+                (key, caller) =>
+                {
+                    return t;
+                });
         }
 
-        public virtual void DisableCaller(string userAuthentication)
+        public virtual bool RemoveCaller(string userAuthentication)
         {
-            var Caller = Callers.FirstOrDefault(c => c.UserAuthentication == userAuthentication);
-            if (Caller != null)
-                Caller.Alive = false;
+            return Callers.TryRemove(userAuthentication, out _);
         }
 
     }

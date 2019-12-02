@@ -4,15 +4,20 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using SignalRClient.Execute;
 
 namespace SignalRClient.Connections.Template
 {
     public class UnidadeColetaTemplateSetupConnection : AbstractTemplateSetupConnection
     {
 
-        public UnidadeColetaTemplateSetupConnection(ILogger<UnidadeColetaTemplateSetupConnection> logger, IConfiguration configuration, ConnectionProvider connectionProvider) 
+        private readonly HandShake _handShake;
+
+        public UnidadeColetaTemplateSetupConnection(ILogger<UnidadeColetaTemplateSetupConnection> logger, IConfiguration configuration, 
+            ConnectionProvider connectionProvider, HandShake handShake) 
             : base(logger, configuration, connectionProvider)
         {
+            _handShake = handShake;
         }
 
         public override void SetupConnectionEvents(HubConnection connection)
@@ -39,55 +44,32 @@ namespace SignalRClient.Connections.Template
         {
             connection.Closed += async (error) =>
             {
-                
                 while (connection.State == HubConnectionState.Disconnected)
                 {
                     try
                     {
-                        _logger.LogInformation("Tentando reconectar...");
-                        await connection.StartAsync();
+                        _logger.LogInformation("Tentando realizar conexão...");
+
+                        var taskConnection = connection.StartAsync();
+                        await taskConnection;
+                        if (!taskConnection.IsCompletedSuccessfully)
+                            continue;
+
                         _logger.LogInformation("Conexão realizada");
 
-                        Task tryHandShakeTask = null;
-                        do
+                        var taskHandShake = _handShake.ExecuteAsync();
+                        await taskHandShake;
+                        while (!taskHandShake.IsCompletedSuccessfully)
                         {
-                            try
-                            {
-                                tryHandShakeTask = connection.InvokeAsync("HandShake", new { Unidade = _configuration["Geral:Unidade"] });
-                                await tryHandShakeTask;
-                                if (tryHandShakeTask.IsCompletedSuccessfully)
-                                {
-                                    _logger.LogInformation("HandShake realizado com sucesso");
-                                    break;
-                                }
-                                else if (tryHandShakeTask.IsCanceled)
-                                {
-                                    _logger.LogWarning("HandShake cancelado");
-                                }
-                                else if (tryHandShakeTask.IsFaulted)
-                                {
-                                    _logger.LogError("Falha ao realizar o HandShake");
-                                }
-                                else
-                                {
-                                    _logger.LogError("Ocorreu um erro não tratado durante o handshake");
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                _logger.LogError("{ex}", ex);
-                            }
-
-                        } while (!tryHandShakeTask.IsCompletedSuccessfully);
+                            taskHandShake = _handShake.ExecuteAsync();
+                            await taskHandShake;
+                        }
                     }
                     catch (Exception ex)
                     {
                         _logger.LogError("Erro ao conectar");
-                        _logger.LogDebug("{ex}", ex);
                         _logger.LogError("{ex}", ex.Message);
                     }
-
-                    await Task.Delay(10000);
                 }
             };
         }
