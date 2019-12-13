@@ -8,9 +8,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SignalRClient", "SignalRCli
 		{2901F812-54F3-4E8E-8FC0-79D028D55B4F} = {2901F812-54F3-4E8E-8FC0-79D028D55B4F}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SignalRLibrary", "SignalRLibrary\SignalRLibrary.csproj", "{2901F812-54F3-4E8E-8FC0-79D028D55B4F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SignalRLibrary", "SignalRLibrary\SignalRLibrary.csproj", "{2901F812-54F3-4E8E-8FC0-79D028D55B4F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "drvPluginEtiquetadoraImpressao", "drvPluginEtiquetadoraImpressao\drvPluginEtiquetadoraImpressao.csproj", "{FC0C03EE-A078-4955-ABD0-F2E07C543242}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "drvPluginEtiquetadoraImpressao", "drvPluginEtiquetadoraImpressao\drvPluginEtiquetadoraImpressao.csproj", "{FC0C03EE-A078-4955-ABD0-F2E07C543242}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "drivers", "drivers", "{2DC64AD1-1B94-4AFD-AD00-7EDBA20AAE35}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -40,6 +42,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{FC0C03EE-A078-4955-ABD0-F2E07C543242} = {2DC64AD1-1B94-4AFD-AD00-7EDBA20AAE35}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {EFC42E53-787E-44D8-A6E6-A873CDF69124}
