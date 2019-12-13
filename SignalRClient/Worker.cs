@@ -37,7 +37,7 @@ namespace SignalRClient
                 _logger.LogInformation("Realizando conexão...");
                 var taskConnection = _connection.StartAsync();
                 await taskConnection;
-                while (!taskConnection.IsCompletedSuccessfully)
+                while (taskConnection.IsFaulted || taskConnection.IsCanceled)
                 {
                     await Task.Delay(10000);
                     _logger.LogInformation("Tentando realizar conexão...");
@@ -49,7 +49,7 @@ namespace SignalRClient
 
                 var taskHandShake = _handShake.ExecuteAsync();
                 await taskHandShake;
-                while (!taskHandShake.IsCompletedSuccessfully)
+                while (taskHandShake.IsFaulted || taskHandShake.IsCanceled)
                 {
                     await Task.Delay(10000);
                     taskHandShake = _handShake.ExecuteAsync();
@@ -63,6 +63,7 @@ namespace SignalRClient
                 }
                 _logger.LogInformation("Serviço na unidade {unidade} finalizado", _configuration["Geral:Unidade"]);
             }
+            // Arrumar trycatch
             catch (Exception ex)
             {
                 _logger.LogError("Erro ao realiza conexão");

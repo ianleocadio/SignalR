@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Composition;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -10,34 +12,18 @@ namespace SignalRClient.Connections.Template
 {
     public class UnidadeColetaTemplateSetupConnection : AbstractTemplateSetupConnection
     {
-
         private readonly HandShake _handShake;
 
         public UnidadeColetaTemplateSetupConnection(ILogger<UnidadeColetaTemplateSetupConnection> logger, IConfiguration configuration, 
-            ConnectionProvider connectionProvider, HandShake handShake) 
-            : base(logger, configuration, connectionProvider)
+            ConnectionProvider connectionProvider, HandShake handShake, CommandDispatcher commandDispatcher) 
+            : base(logger, configuration, connectionProvider, commandDispatcher)
         {
             _handShake = handShake;
         }
 
         public override void SetupConnectionEvents(HubConnection connection)
         {
-            connection.On<string>("Imprime", (string etiqueta) =>
-            {
-                _logger.LogInformation("Etiqueta a ser impressa: {etiqueta}", etiqueta);
-
-                Thread.Sleep(3000);
-
-                int binary = new Random().Next(0, 2);
-                if (binary == 0)
-                {
-                    _logger.LogError("Falha ao imprimir etiqueta: {etiqueta}", etiqueta);
-                    connection.InvokeAsync("FalhaImpressao", new { Unidade = _configuration["Geral:Unidade"], Etiqueta = etiqueta });
-                    return;
-                }
-
-                _logger.LogInformation("Etiqueta impressa: {etiqueta}", etiqueta);
-            });
+            _commandDispatcher.BindCommands();
         }
 
         public override void SetupOnCloseConnection(HubConnection connection)

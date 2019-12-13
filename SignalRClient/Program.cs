@@ -21,7 +21,6 @@ namespace SignalRClient
 
         public static IHostBuilder CreateHostBuilder(string[] args)
         {
-
             #region Contruíndo Configuração
             var configFilePath = "appsettings.json";
 
@@ -51,26 +50,14 @@ namespace SignalRClient
                     services.AddHostedService<Worker>();
 
                     #region Singletons
-                    services.AddSingleton<ConnectionProvider>((provider) =>
-                    {
-                        ILogger<ConnectionProvider> logger = provider.GetRequiredService<ILogger<ConnectionProvider>>();
-                        IConfiguration config = provider.GetRequiredService<IConfiguration>();
-
-                        return new ConnectionProvider(logger, config);
-                    });
+                    services.AddSingleton<ConnectionProvider>();
                     #endregion
 
                     #region Scoped's
                     services.AddScoped<HandShake>()
-                    .AddScoped<AbstractTemplateSetupConnection, UnidadeColetaTemplateSetupConnection>((provider) =>
-                    {
-                        ILogger<UnidadeColetaTemplateSetupConnection> logger = provider.GetRequiredService<ILogger<UnidadeColetaTemplateSetupConnection>>();
-                        IConfiguration config = provider.GetRequiredService<IConfiguration>();
-                        ConnectionProvider connectionProvider = provider.GetRequiredService<ConnectionProvider>();
-                        HandShake handShake = provider.GetRequiredService<HandShake>();
-
-                        return new UnidadeColetaTemplateSetupConnection(logger, config, connectionProvider, handShake);
-                    })
+                    .AddScoped<PluginProvider>()
+                    .AddScoped<CommandDispatcher>()
+                    .AddScoped<AbstractTemplateSetupConnection, UnidadeColetaTemplateSetupConnection>()
                     ;
                     #endregion
                 })
