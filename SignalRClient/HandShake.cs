@@ -3,8 +3,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using SignalRClient.Connections;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace SignalRClient.Execute
@@ -23,42 +21,45 @@ namespace SignalRClient.Execute
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         }
 
-        public async Task ExecuteAsync()
+        public async Task StartHandShake(ILogger logger = null)
         {
+            if (logger == null)
+                logger = _logger;
+
             Task tryHandShakeTask = null;
             do
             {
                 try
                 {
-                    _logger.LogInformation("Realizando HandShake...");
+                    logger.LogInformation("Realizando HandShake...");
                     tryHandShakeTask = _connection.InvokeAsync("HandShake", new { Unidade = _configuration["Geral:Unidade"] });
                     await tryHandShakeTask;
                     if (tryHandShakeTask.IsCompletedSuccessfully)
                     {
-                        _logger.LogInformation("HandShake realizado com sucesso");
+                        logger.LogInformation("HandShake realizado com sucesso");
                         break;
                     }
                     else if (tryHandShakeTask.IsCanceled)
                     {
-                        _logger.LogWarning("HandShake cancelado");
+                        logger.LogWarning("HandShake cancelado");
 
                     }
                     else if (tryHandShakeTask.IsFaulted)
                     {
-                        _logger.LogError("Falha ao realizar o HandShake");
+                        logger.LogError("Falha ao realizar o HandShake");
                     }
                     else
                     {
-                        _logger.LogError("Ocorreu um erro não tratado durante o handshake");
+                        logger.LogError("Ocorreu um erro não tratado durante o handshake");
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError("{ex}", ex.Message);
+                    logger.LogError("{ex}", ex.Message);
                 }
                 finally
                 {
-                    await Task.Delay(15000);
+                    await Task.Delay(7000);
                 }
 
             } while (!tryHandShakeTask.IsCompletedSuccessfully);

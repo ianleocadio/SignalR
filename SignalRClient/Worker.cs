@@ -15,16 +15,16 @@ namespace SignalRClient
     {
         private readonly ILogger<Worker> _logger;
         private readonly IConfiguration _configuration;
-        private readonly HubConnection _connection;
+        private readonly ConnectionProvider _connectionProvider;
         private readonly HandShake _handShake;
 
-        public Worker(ILogger<Worker> logger, IConfiguration configuration, 
+        public Worker(ILogger<Worker> logger, IConfiguration configuration,
             ConnectionProvider connectionProvider, AbstractTemplateSetupConnection templateSetupConnection,
             HandShake handShake)
         {
             _logger = logger;
             _configuration = configuration;
-            _connection = connectionProvider?.Connection;
+            _connectionProvider = connectionProvider;
             _handShake = handShake;
 
             templateSetupConnection.SetupConnection();
@@ -32,44 +32,19 @@ namespace SignalRClient
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            try
-            {
-                _logger.LogInformation("Realizando conexão...");
-                var taskConnection = _connection.StartAsync();
-                await taskConnection;
-                while (taskConnection.IsFaulted || taskConnection.IsCanceled)
-                {
-                    await Task.Delay(10000);
-                    _logger.LogInformation("Tentando realizar conexão...");
-                    taskConnection = _connection.StartAsync();
-                    await taskConnection;
-                }
+            await _connectionProvider.StartConnection(_logger);
 
-                _logger.LogInformation("Conexão realizada");
-
-                var taskHandShake = _handShake.ExecuteAsync();
-                await taskHandShake;
-                while (taskHandShake.IsFaulted || taskHandShake.IsCanceled)
-                {
-                    await Task.Delay(10000);
-                    taskHandShake = _handShake.ExecuteAsync();
-                    await taskHandShake;
-                }
-
-                _logger.LogInformation("Serviço na unidade {unidade} está executando", _configuration["Geral:Unidade"]);
-                while (!stoppingToken.IsCancellationRequested)
-                {
-                    await Task.Delay(10000);
-                }
-                _logger.LogInformation("Serviço na unidade {unidade} finalizado", _configuration["Geral:Unidade"]);
-            }
-            // Arrumar trycatch
-            catch (Exception ex)
-            {
-                _logger.LogError("Erro ao realiza conexão");
-                _logger.LogError("{ex}", ex.Message);
-            }
+            await _handShake.StartHandShake(_logger);
             
+            _logger.LogInformation("Serviço na unidade {unidade} está executando", _configuration["Geral:Unidade"]);
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                await Task.Delay(10000);
+            }
+            _logger.LogInformation("Serviço na unidade {unidade} finalizado", _configuration["Geral:Unidade"]);
+
         }
+
     }
+
 }

@@ -1,4 +1,5 @@
-﻿using SignalRLibrary;
+﻿using Microsoft.Extensions.Logging;
+using SignalRLibrary;
 using System;
 using System.Collections.Generic;
 using System.Composition;
@@ -13,13 +14,18 @@ namespace SignalRClient
 {
     public class PluginProvider
     {
-        public PluginProvider()
+
+        private readonly IServiceProvider _serviceProvider;
+
+        public PluginProvider(IServiceProvider serviceProvider)
         {
+            
+            _serviceProvider = serviceProvider;
             Compose();
         }
 
         [ImportMany]
-        public IEnumerable<IPlugin> Plugins { get; private set; }
+        public IEnumerable<Plugin> Plugins { get; private set; }
 
         private void Compose()
         {
@@ -28,7 +34,7 @@ namespace SignalRClient
             var pluginAssemblies = Directory.GetFiles("c:\\plugins\\", "*.dll", SearchOption.TopDirectoryOnly)
                 .Select(AssemblyLoadContext.Default.LoadFromAssemblyPath)
                 // Ensure that the assembly contains an implementation for the given type.
-                .Where(s => s.GetTypes().Where(p => typeof(IPlugin).IsAssignableFrom(p)).Any());
+                .Where(s => s.GetTypes().Where(p => typeof(Plugin).IsAssignableFrom(p)).Any());
 
             assemblies.AddRange(pluginAssemblies);
 
@@ -37,7 +43,13 @@ namespace SignalRClient
 
             using (var container = configuration.CreateContainer())
             {
-                Plugins = container.GetExports<IPlugin>();
+                Plugins = container.GetExports<Plugin>().Select(p =>
+                {
+                    Type loggerType = typeof(ILogger<>);
+                    Type loggerContructedType = loggerType.MakeGenericType(p.GetType());
+                    p.Logger = (ILogger)_serviceProvider.GetService(loggerContructedType);
+                    return p;
+                });
             }
         }
     }

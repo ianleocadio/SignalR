@@ -2,18 +2,25 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Threading.Tasks;
 
 namespace SignalRClient.Connections
 {
     public class ConnectionProvider
     {
-        public HubConnection Connection;
+        public readonly ILogger<ConnectionProvider> _logger;
+
+        private HubConnection _connection;
+        public HubConnection Connection { get => _connection; }
 
         public ConnectionProvider(ILogger<ConnectionProvider> logger, IConfiguration configuration)
         {
+            _logger = logger;
+
             try
             {
-                Connection = new HubConnectionBuilder()
+                _connection = new HubConnectionBuilder()
+                       .WithAutomaticReconnect()
                        .WithUrl(configuration["ServerConnection:URI"], options =>
                        {
                            var username = configuration["Authentication:Username"];
@@ -25,9 +32,43 @@ namespace SignalRClient.Connections
             }
             catch (Exception ex)
             {
-                logger.LogInformation("Erro ao construir a conexão com o servidor");
+                _logger.LogInformation("Erro ao construir a conexão com o servidor");
                 throw ex;
             }
+        }
+
+        public async Task StartConnection(ILogger logger = null)
+        {
+            if (logger == null)
+                logger = _logger;
+            try
+            {
+                Task taskConn = null;
+                logger.LogInformation("Realizando conexão...");
+                do
+                {
+                    try
+                    {
+                        taskConn = _connection.StartAsync();
+                        await taskConn;
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, ex.Message);
+                        logger.LogInformation("Tentando realizar conexão...");
+                        await Task.Delay(7000);
+                    }
+
+                } while (_connection.State == HubConnectionState.Disconnected);
+
+                logger.LogInformation("Conexão realizada");
+
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex.Message);
+            }
+
         }
     }
 }

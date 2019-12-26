@@ -14,6 +14,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "drvPluginEtiquetadoraImpres
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "drivers", "drivers", "{2DC64AD1-1B94-4AFD-AD00-7EDBA20AAE35}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "drvPluginRelatorioImpressao", "drvPluginRelatorioImpressao\drvPluginRelatorioImpressao.csproj", "{B41DA313-2679-4688-9397-9633F3921FF0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		d|Any CPU = d|Any CPU
@@ -39,12 +41,19 @@ Global
 		{FC0C03EE-A078-4955-ABD0-F2E07C543242}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FC0C03EE-A078-4955-ABD0-F2E07C543242}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FC0C03EE-A078-4955-ABD0-F2E07C543242}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B41DA313-2679-4688-9397-9633F3921FF0}.d|Any CPU.ActiveCfg = Debug|Any CPU
+		{B41DA313-2679-4688-9397-9633F3921FF0}.d|Any CPU.Build.0 = Debug|Any CPU
+		{B41DA313-2679-4688-9397-9633F3921FF0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B41DA313-2679-4688-9397-9633F3921FF0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B41DA313-2679-4688-9397-9633F3921FF0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B41DA313-2679-4688-9397-9633F3921FF0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{FC0C03EE-A078-4955-ABD0-F2E07C543242} = {2DC64AD1-1B94-4AFD-AD00-7EDBA20AAE35}
+		{B41DA313-2679-4688-9397-9633F3921FF0} = {2DC64AD1-1B94-4AFD-AD00-7EDBA20AAE35}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {EFC42E53-787E-44D8-A6E6-A873CDF69124}

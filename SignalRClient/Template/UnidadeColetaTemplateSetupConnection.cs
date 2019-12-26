@@ -21,42 +21,18 @@ namespace SignalRClient.Connections.Template
             _handShake = handShake;
         }
 
-        public override void SetupConnectionEvents(HubConnection connection)
+        public override void SetupConnectionEvents()
         {
             _commandDispatcher.BindCommands();
         }
 
-        public override void SetupOnCloseConnection(HubConnection connection)
+        public override void SetupOnCloseConnection()
         {
-            connection.Closed += async (error) =>
+            _connectionProvider.Connection.Closed += async (error) =>
             {
-                while (connection.State == HubConnectionState.Disconnected)
-                {
-                    try
-                    {
-                        _logger.LogInformation("Tentando realizar conexão...");
+                await _connectionProvider.StartConnection();
 
-                        var taskConnection = connection.StartAsync();
-                        await taskConnection;
-                        if (!taskConnection.IsCompletedSuccessfully)
-                            continue;
-
-                        _logger.LogInformation("Conexão realizada");
-
-                        var taskHandShake = _handShake.ExecuteAsync();
-                        await taskHandShake;
-                        while (!taskHandShake.IsCompletedSuccessfully)
-                        {
-                            taskHandShake = _handShake.ExecuteAsync();
-                            await taskHandShake;
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError("Erro ao conectar");
-                        _logger.LogError("{ex}", ex.Message);
-                    }
-                }
+                await _handShake.StartHandShake();
             };
         }
 
@@ -64,18 +40,18 @@ namespace SignalRClient.Connections.Template
         /// Não implementado ainda
         /// </summary>
         /// <param name="connection"></param>
-        public override void SetupOnReconnectConnection(HubConnection connection)
+        public override void SetupOnReconnectConnection()
         {
-            base.SetupOnReconnectConnection(connection);
+            base.SetupOnReconnectConnection();
         }
 
         /// <summary>
         /// Não implementado ainda
         /// </summary>
         /// <param name="connection"></param>
-        public override void SetupOnReconnectingConnection(HubConnection connection)
+        public override void SetupOnReconnectingConnection()
         {
-            base.SetupOnReconnectingConnection(connection);
+            base.SetupOnReconnectingConnection();
         }
     }
 }

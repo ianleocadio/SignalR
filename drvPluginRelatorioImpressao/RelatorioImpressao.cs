@@ -5,29 +5,27 @@ using System;
 using System.Composition;
 using System.Threading.Tasks;
 
-namespace SignalRPrototype.Drivers.drvPluginEtiquetadoraImpressao
+namespace drvPluginRelatorioImpressao
 {
-    [Export(typeof(Plugin))]
-    public class EtiquetadoraImpressao : Plugin
-    {
 
-        #region Parameters
+    [Export(typeof(Plugin))]
+    public class RelatorioImpressao : Plugin
+    {
         public class Parameters
         {
             public string Unidade { get; set; }
             public string Codigo { get; set; }
             public string Descricao { get; set; }
         }
-        #endregion
 
-        #region Evento Imprime
-        [Event("ImprimeEtiqueta", ResponseHandlerMethodName = "ImprimeEtiquetaResponse")]
-        public Task ImprimeEtiqueta(Parameters p)
+
+        #region Evento ImprimeRelatorio
+        [Event("ImprimeRelatorio", ResponseHandlerMethodName = "ImprimeRelatorioResponse")]
+        public Task ImprimeRelatorio(Parameters p)
         {
-
             Task.Delay(3000).Wait();
 
-            Logger.LogInformation("Impressão etiqueta: {Codigo}", p.Codigo);
+            Logger.LogInformation("Impressão relatório: {Codigo}", p.Codigo);
 
             Random r = new Random();
             var n = r.Next(0, 2);
@@ -39,20 +37,20 @@ namespace SignalRPrototype.Drivers.drvPluginEtiquetadoraImpressao
             {
                 return Task.FromException(new Exception("Erro"));
             }
+
         }
 
-        public Task ImprimeEtiquetaResponse(HubConnection conn, Exception ex, Parameters p)
+        public Task ImprimeRelatorioResponse(HubConnection conn, Exception ex, Parameters p)
         {
             if (ex == null)
-                Logger.LogInformation("Sucesso impressão etiqueta: {Codigo}", p.Codigo);
+                Logger.LogInformation("Sucesso impressão Relatorio: {Codigo}", p.Codigo);
             else
-                Logger.LogError("Falha impressão etiqueta: {Codigo}", p.Codigo);
+                Logger.LogError("Falha impressão Relatorio: {Codigo}", p.Codigo);
 
             conn.InvokeAsync("DefaultResponse", p.Unidade, p.Codigo, ex?.Message);
 
             return Task.CompletedTask;
         }
         #endregion
-
     }
 }

@@ -15,7 +15,7 @@ namespace SignalRClient
     {
 
         private readonly ILogger<CommandDispatcher> _logger;
-        
+
         private const BindingFlags DispatchBindingFlags = BindingFlags.IgnoreCase
                                                         | BindingFlags.IgnoreReturn
                                                         | BindingFlags.Instance
@@ -23,9 +23,8 @@ namespace SignalRClient
                                                         | BindingFlags.NonPublic
                                                         | BindingFlags.Static;
 
-        private const string DispatchMethodName = "ExecuteAsync";
         private readonly HubConnection _hubConnection;
-        private readonly IEnumerable<IPlugin> _commands;
+        private readonly IEnumerable<Plugin> _commands;
 
         public CommandDispatcher(ILogger<CommandDispatcher>  logger, ConnectionProvider connectionProvider, 
             PluginProvider pluginProvider)
@@ -35,7 +34,29 @@ namespace SignalRClient
             _commands = pluginProvider?.Plugins;
         }
 
-        private static Action<object[]> CreateAction(object instance, MethodInfo methodInfo)
+        //private static Action<object[]> CreateAction(object instance, MethodInfo methodInfo)
+        //{
+        //    ParameterExpression objectArrayParameter = Expression.Parameter(typeof(object[]), "args");
+
+        //    ParameterInfo[] methodInfoParameters = methodInfo.GetParameters();
+        //    var parameters = new Expression[methodInfoParameters.Length];
+        //    for (var i = 0; i < methodInfoParameters.Length; ++i)
+        //    {
+        //        ConstantExpression index = Expression.Constant(i);
+        //        Type methodInfoParameterType = methodInfoParameters[i].ParameterType;
+        //        BinaryExpression objectArrayParameterAccessor = Expression.ArrayIndex(objectArrayParameter, index);
+        //        UnaryExpression objectArrayParameterCast = Expression.Convert(objectArrayParameterAccessor, methodInfoParameterType);
+        //        parameters[i] = objectArrayParameterCast;
+        //    }
+
+        //    MethodCallExpression call = Expression.Call(Expression.Constant(instance), methodInfo, parameters);
+        //    Expression<Action<object[]>> lambda = Expression.Lambda<Action<object[]>>(call, objectArrayParameter);
+
+        //    Action<object[]> compiled = lambda.Compile();
+        //    return compiled;
+        //}
+
+        private static Func<object[], Task> CreateFunc(object instance, MethodInfo methodInfo)
         {
             ParameterExpression objectArrayParameter = Expression.Parameter(typeof(object[]), "args");
 
@@ -51,98 +72,126 @@ namespace SignalRClient
             }
 
             MethodCallExpression call = Expression.Call(Expression.Constant(instance), methodInfo, parameters);
-            Expression<Action<object[]>> lambda = Expression.Lambda<Action<object[]>>(call, objectArrayParameter);
+            Expression<Func<object[], Task>> lambda = Expression.Lambda<Func<object[], Task>>(call, objectArrayParameter);
 
-            Action<object[]> compiled = lambda.Compile();
+            Func<object[], Task> compiled = lambda.Compile();
             return compiled;
         }
 
-        private static IEnumerable<string> GetEndPointNames(MemberInfo memberInfo)
-        {
-            List<EndPointAttribute> endpointAttributes = memberInfo.GetCustomAttributes<EndPointAttribute>().ToList();
-            return endpointAttributes.Select(x => x.Name);
-        }
 
         private static bool HasEndPointNamesDefined(Type type)
         {
-            // First search on class level
-            List<EndPointAttribute> endpointAttributes = type.GetCustomAttributes<EndPointAttribute>().ToList();
+            List<EventAttribute> EventAttributes = new List<EventAttribute>();
 
             // Second on all methods
             MethodInfo[] methodInfos = type.GetMethods();
             foreach (MethodInfo methodInfo in methodInfos)
             {
-                List<EndPointAttribute> methodEndPointAttributes = methodInfo.GetCustomAttributes<EndPointAttribute>().ToList();
-                endpointAttributes.AddRange(methodEndPointAttributes);
+                List<EventAttribute> methodEventAttributes = methodInfo.GetCustomAttributes<EventAttribute>().ToList();
+                EventAttributes.AddRange(methodEventAttributes);
             }
 
-            return endpointAttributes.Count > 0 && endpointAttributes.Any(x => !string.IsNullOrEmpty(x.Name));
+            return EventAttributes.Count > 0 && EventAttributes.Any(x => !string.IsNullOrEmpty(x.EndPoint));
         }
 
         public void BindCommands()
         {
-            IEnumerable<IPlugin> commands = _commands.Where(x => HasEndPointNamesDefined(x.GetType()));
+            IEnumerable<Plugin> commands = _commands.Where(x => HasEndPointNamesDefined(x.GetType()));
 
-            foreach (IPlugin command in commands)
+            foreach (Plugin command in commands)
             {
-                var commandRegistered = false;
-
-                // First search for default 'ExecuteAsync' method, for class level binding
-                MethodInfo defaultMethodInfo = command.GetType().GetMethod(DispatchMethodName, DispatchBindingFlags);
-                if (defaultMethodInfo != null)
-                {
-                    ParameterInfo[] arguments = defaultMethodInfo.GetParameters();
-                    Type[] types = arguments.Select(x => x.ParameterType).ToArray();
-
-                    foreach (string endPointName in GetEndPointNames(command.GetType()))
-                    {
-                        Action<object[]> action = CreateAction(command, defaultMethodInfo);
-
-                        MethodInfo onMethod = GetType().GetMethod(nameof(On), DispatchBindingFlags);
-                        if (onMethod != null)
-                        {
-                            onMethod.Invoke(this, new object[] { endPointName, types, action });
-                            commandRegistered = true;
-                        }
-                    }
-                }
 
                 // Second search on all methods
                 MethodInfo[] methodInfos = command.GetType().GetMethods();
                 foreach (MethodInfo methodInfo in methodInfos)
                 {
-                    List<EndPointAttribute> methodEndPointAttributes = methodInfo.GetCustomAttributes<EndPointAttribute>().ToList();
-                    if (methodEndPointAttributes.Count <= 0) continue;
+                    List<EventAttribute> methodEventAttributes = methodInfo.GetCustomAttributes<EventAttribute>().ToList();
+                    if (methodEventAttributes.Count <= 0) continue;
 
-                    foreach (string endPointName in GetEndPointNames(methodInfo))
+                    foreach (var Event in methodEventAttributes)
                     {
                         ParameterInfo[] arguments = methodInfo.GetParameters();
                         Type[] types = arguments.Select(x => x.ParameterType).ToArray();
 
-                        Action<object[]> action = CreateAction(command, methodInfo);
+                        //Action<object[]> action = CreateAction(command, methodInfo);
+                        Func<object[], Task> func = CreateFunc(command, methodInfo);
 
-                        MethodInfo onMethod = GetType().GetMethod(nameof(On), DispatchBindingFlags);
-                        if (onMethod != null)
+                        Func<object[], Task> responseHandler = null;
+                        MethodInfo responseHandlerMethodInfo = null;
+                        if (Event.HasReponseHandler())
                         {
-                            onMethod.Invoke(this, new object[] { endPointName, types, action });
-                            commandRegistered = true;
+                            responseHandlerMethodInfo = command.GetType().GetMethod(Event.ResponseHandlerMethodName, DispatchBindingFlags);
+                            var t = responseHandlerMethodInfo.GetParameters();
+                            responseHandler = CreateFunc(command, responseHandlerMethodInfo);
                         }
+
+                        On(Event.EndPoint, types, func, responseHandler, responseHandlerMethodInfo);
                     }
                 }
             }
         }
 
-        private IDisposable On(string methodName, Type[] parameterTypes, Action<object[]> handler)
+        private IDisposable On(string methodName, Type[] parameterTypes, Func<object[], Task> handler,
+            Func<object[], Task> responseHandler = null, MethodInfo responseHandlerMethodInfo = null)
         {
             return _hubConnection.On(methodName,
                                     parameterTypes,
-                                    (parameters, state) =>
+                                    (valueParameters, state) =>
                                     {
-                                        var currentHandler = (Action<object[]>)state;
-                                        currentHandler(parameters);
+                                        var currentHandler = (Func<object[], Task>)state;
+
+                                        currentHandler(valueParameters)
+                                        .ContinueWith((task) =>
+                                        {
+                                            if (responseHandler == null)
+                                                return;
+
+                                            if (task.IsCompletedSuccessfully)
+                                            {
+                                                ExecuteHandlerResponse(responseHandler, responseHandlerMethodInfo, valueParameters);
+                                            }
+                                            else if (task.IsFaulted)
+                                            {
+                                                ExecuteHandlerResponse(responseHandler, responseHandlerMethodInfo, valueParameters,
+                                                    true, task?.Exception.InnerException);
+                                            }
+
+                                        });
+
                                         return Task.CompletedTask;
                                     },
                                     handler);
         }
+
+        private void ExecuteHandlerResponse(Func<object[], Task> handler, MethodInfo info,
+            object[] valueParameters, bool isFailHandler = false, Exception exception = null)
+        {
+            handler(InjectDependenciesHandler(valueParameters.ToList(), info.GetParameters(), isFailHandler, exception));
+        }
+
+        private object[] InjectDependenciesHandler(List<object> valueParameters, ParameterInfo[] methodParameters,
+            bool isFailHandler, Exception exception)
+        {
+            IEnumerable<object> handlerParameters = new object[] { };
+
+            if (methodParameters.Length <= 0)
+                return handlerParameters.ToArray();
+
+            if (methodParameters[0].ParameterType != typeof(HubConnection))
+            {
+                _logger.LogError("HubConnection deve ser o primeiro argumento para qualquer assinatura de método do ReponseHandler do EventAttribute");
+                throw new Exception("HubConnection deve ser o primeiro argumento para qualquer assinatura de método do ReponseHandler do EventAttribute");
+            }
+            else if (methodParameters[1].ParameterType != typeof(Exception))
+            {
+                _logger.LogError("Exception deve ser o segundo argumento para qualquer assinatura de método do ReponseHandler do EventAttribute");
+                throw new Exception("Exception deve ser o segundo argumento para qualquer assinatura de método do ReponseHandler do EventAttribute");
+            }
+
+            handlerParameters = handlerParameters.Append(_hubConnection);
+            handlerParameters = handlerParameters.Append(exception);
+            return handlerParameters.Concat(valueParameters).ToArray();
+        }
     }
 }
+    

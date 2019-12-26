@@ -9,7 +9,7 @@ namespace SignalRClient.Connections.Template
     {
         protected ILogger _logger { get; set; }
         protected readonly IConfiguration _configuration;
-        private readonly HubConnection _connection;
+        protected readonly ConnectionProvider _connectionProvider;
         protected readonly CommandDispatcher _commandDispatcher;
 
         protected AbstractTemplateSetupConnection(ILogger logger, IConfiguration configuration, ConnectionProvider connectionProvider
@@ -17,21 +17,21 @@ namespace SignalRClient.Connections.Template
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            _connection = connectionProvider?.Connection ?? throw new ArgumentNullException(nameof(connectionProvider.Connection));
+            _connectionProvider = connectionProvider ?? throw new ArgumentNullException(nameof(connectionProvider));
             _commandDispatcher = commandDispatcher ?? throw new ArgumentNullException(nameof(commandDispatcher));
         }
 
-        public virtual void SetupOnCloseConnection(HubConnection connection) { }
-        public virtual void SetupOnReconnectConnection(HubConnection connection) { }
-        public virtual void SetupOnReconnectingConnection(HubConnection connection) { }
-        public virtual void SetupConnectionEvents(HubConnection connection) { }
+        public virtual void SetupOnCloseConnection() { }
+        public virtual void SetupOnReconnectConnection() { }
+        public virtual void SetupOnReconnectingConnection() { }
+        public virtual void SetupConnectionEvents() { }
 
         public void SetupConnection()
         {
-            SetupOnCloseConnection(_connection);
-            SetupOnReconnectConnection(_connection);
-            SetupOnReconnectingConnection(_connection);
-            SetupConnectionEvents(_connection);
+            SetupOnCloseConnection();
+            SetupOnReconnectConnection();
+            SetupOnReconnectingConnection();
+            SetupConnectionEvents();
         }
     }
 }
